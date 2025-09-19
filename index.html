@@ -23,17 +23,14 @@
         .active-page { display: flex; }
         #login-page.active-page, #login-details-page.active-page { display: block; }
         
-        /* --- FINAL ROBUST TAB FIX --- */
         .sub-dashboard-content {
             display: none;
-            /* This forces the element into a new rendering layer, containing the map */
             transform: translateZ(0); 
             -webkit-transform: translateZ(0);
         }
         .active-tab-content {
             display: block;
         }
-        /* --- END FIX --- */
 
         .chart-container { position: relative; height: 300px; width: 100%; }
         
@@ -75,59 +72,50 @@
             align-items: center;
         }
         /* Chat bubble styles */
-        .chat-bubble {
-            max-width: 75%;
-            padding: 0.75rem 1rem;
-            border-radius: 1rem;
-            margin-bottom: 0.5rem;
-            word-break: break-word;
-        }
-        .user-bubble {
-            background-color: #3b82f6; /* blue-500 */
-            color: white;
-            align-self: flex-end;
-            border-bottom-right-radius: 0.25rem;
-        }
-        .bot-bubble {
-            background-color: #e5e7eb; /* gray-200 */
-            color: #1f2937; /* gray-800 */
-            align-self: flex-start;
-            border-bottom-left-radius: 0.25rem;
-        }
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-        }
-        .typing-indicator span {
-            height: 8px;
-            width: 8px;
-            margin: 0 2px;
-            background-color: #9ca3af;
-            border-radius: 50%;
-            display: inline-block;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
+        .chat-bubble { max-width: 75%; padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 0.5rem; word-break: break-word; }
+        .user-bubble { background-color: #3b82f6; color: white; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
+        .bot-bubble { background-color: #e5e7eb; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 0.25rem; }
+        .typing-indicator { display: flex; align-items: center; }
+        .typing-indicator span { height: 8px; width: 8px; margin: 0 2px; background-color: #9ca3af; border-radius: 50%; display: inline-block; animation: bounce 1.4s infinite ease-in-out both; }
         .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
         .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
         
-        .legend {
-            background: white;
-            padding: 8px;
-            line-height: 18px;
-            color: #555;
-            font-size: 14px;
-            border-radius: 6px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        .legend { background: white; padding: 8px; line-height: 18px; color: #555; font-size: 14px; border-radius: 6px; box-shadow: 0 0 15px rgba(0,0,0,0.2); }
+
+        /* Loader Styles */
+        .main-loader { display: none; }
+        .loader-spinner {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Toast Styles */
+        .toast {
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.info { background-color: #3b82f6; } /* blue-500 */
+        .toast.success { background-color: #22c55e; } /* green-500 */
+        .toast.error { background-color: #ef4444; } /* red-500 */
 
     </style>
 </head>
 <body class="text-slate-800">
 
+    <!-- Login Page -->
     <div id="login-page" data-page class="active-page min-h-screen flex flex-col">
          <header class="w-full bg-white shadow-md flex-shrink-0">
             <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -155,6 +143,7 @@
         </main>
     </div>
 
+    <!-- Login Details Page -->
     <div id="login-details-page" data-page class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div class="sm:mx-auto sm:w-full sm:max-w-md">
             <h2 id="login-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900"></h2>
@@ -181,13 +170,14 @@
 
                 <div id="qr-login-section" class="mt-6 hidden">
                     <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">Or</span></div></div>
-                    <div class="mt-6"><button type="button" class="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75h3.375V19.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75a2.625 2.625 0 005.25 0v-4.875a2.625 2.625 0 00-5.25 0v4.875z" /></svg>Sign in with QR Code</button></div>
+                    <div class="mt-6"><button type="button" class="action-btn w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75h3.375V19.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75a2.625 2.625 0 005.25 0v-4.875a2.625 2.625 0 00-5.25 0v4.875z" /></svg>Sign in with QR Code</button></div>
                 </div>
                 <div class="mt-6"><button type="button" class="back-to-home-btn text-center w-full text-sm text-indigo-600 hover:text-indigo-500">Back to role selection</button></div>
             </div>
         </div>
     </div>
 
+    <!-- Migrant Dashboard -->
     <div id="migrant-dashboard" data-page class="h-screen w-full bg-gray-100">
         <div id="sidebar-overlay-migrant" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
         <aside data-sidebar="migrant" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
@@ -195,10 +185,9 @@
             <nav class="flex-1 p-4 space-y-2" data-nav-for="migrant">
                 <button data-tab-target="migrant-id" class="side-nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg><span data-translate="migrant_nav_id">Digital Health ID</span></button>
                 <button data-tab-target="migrant-locker" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg><span data-translate="migrant_nav_locker">Health Locker</span></button>
-                 <button data-tab-target="migrant-immunization" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span data-translate="migrant_nav_immunization">Immunization</span></button>
+                <button data-tab-target="migrant-immunization" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span data-translate="migrant_nav_immunization">Immunization</span></button>
                 <button data-tab-target="migrant-teleconsultation" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg><span data-translate="migrant_nav_teleconsultation">Teleconsultation</span></button>
-                <button data-tab-target="migrant-chatbot" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.455.09-.934.09-1.423V14.25c0-2.828c0-3.328.024-3.51.048-3.696.068-.534.223-1.047.46-1.517.228-.455.54-1.01.92-1.598.393-.61.88-1.262 1.448-1.928.612-.71 1.368-1.372 2.228-1.928.872-.569 1.86-.96 2.928-1.135.53-.086 1.05-.134 1.55-.164.288-.018.577-.024 1.148-.024 2.39 0 4.34 1.58 4.34 3.5v.085c0 .356.015.707.044 1.05.02.23.038.46.056.688a4.502 4.502 0 01-1.332 3.118l-3.38 3.38a1.5 1.5 0 00-.44 1.06z" /></svg><span data-translate="migrant_nav_chatbot">Health Chatbot</span></button>
-                <button data-tab-target="migrant-advisories" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg><span data-translate="migrant_nav_advisories">Health Advisories</span></button>
+                <button data-tab-target="migrant-support" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>Support</button>
             </nav>
             <div class="p-4 space-y-4 border-t border-gray-700">
                 <div><label for="language-select-migrant" class="text-xs font-semibold text-gray-400" data-translate="language_label">Language</label><select data-lang-selector class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"><option value="en">English</option><option value="ml">മലയാളം</option><option value="hi">हिन्दी</option><option value="bn">বাংলা</option></select></div>
@@ -211,16 +200,17 @@
         <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
             <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="migrant" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2" data-translate="migrant_header_title">Worker Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2" data-translate="logout_btn">Logout</button></div></header>
             <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="migrant">
-                <div id="migrant-id" class="sub-dashboard-content active-tab-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_id_title">My Digital Health ID</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl text-center"><h2 class="text-2xl font-bold text-gray-800">Ankit Sharma</h2><p class="text-gray-500 mb-4">ID: 12-3456-7890-1234</p><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ABHA-ID-12-3456-7890-1234" alt="QR Code" class="mx-auto rounded-lg mb-6"><p class="text-sm text-gray-600" data-translate="migrant_id_desc">Show this QR code at any registered healthcare facility.</p></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4" data-translate="migrant_summary_title">Health Summary</h2><div class="space-y-4 text-md"><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_blood">Blood Group:</strong><span class="font-semibold float-right">O+</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_allergies">Allergies:</strong><span class="font-semibold float-right">Penicillin</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_chronic">Chronic Conditions:</strong><span class="font-semibold float-right">None Reported</span></div></div></div></div></div>
-                <div id="migrant-locker" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_records_title">My Recent Health Records</h2><div class="bg-white p-6 rounded-xl shadow space-y-4"><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-blue-100 p-2 rounded-full"><span class="text-xl">🩺</span></div><div><p class="font-semibold" data-translate="migrant_record1_title">General Check-up</p><p class="text-sm text-gray-500">Dr. Priya Nair | CHC, Ernakulam</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record1_desc">Diagnosed with viral fever. Prescription issued.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 12 Sep 2025</p><button class="text-sm text-teal-600 font-semibold mt-2" data-translate="view_details_btn">View Details</button></div></div><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-green-100 p-2 rounded-full"><span class="text-xl">💉</span></div><div><p class="font-semibold" data-translate="migrant_record2_title">Tetanus Vaccine</p><p class="text-sm text-gray-500">Govt. Hospital, Thrissur</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record2_desc">Booster dose administered.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 25 Jul 2025</p><button class="text-sm text-teal-600 font-semibold mt-2" data-translate="view_certificate_btn">View Certificate</button></div></div></div></div>
-                <div id="migrant-immunization" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_immunization_title">Immunization Status</h2><div class="bg-white p-6 rounded-xl shadow"><div class="space-y-3"><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>COVID-19 (Booster)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_complete">Complete</span></p><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>Tetanus (Td)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_updated">Up to date</span></p><p class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg"><span>Hepatitis B</span> <span class="font-semibold text-yellow-600 text-sm" data-translate="status_partial">Dose 2 of 3 Complete</span></p></div></div></div>
-                <div id="migrant-teleconsultation" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_teleconsult_title">Teleconsultation</h2><div class="bg-white p-8 rounded-xl shadow text-center max-w-md mx-auto"><div class="mb-4"><span class="text-5xl">👨‍⚕️</span></div><h3 class="text-lg font-bold mb-2" data-translate="migrant_teleconsult_desc">Connect with a doctor now via video call for a consultation.</h3><p class="text-sm text-gray-500 mb-6"><strong data-translate="migrant_teleconsult_status">Doctor Status:</strong> <span class="text-green-500 font-bold" data-translate="migrant_teleconsult_online">Online</span></p><button class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700" data-translate="migrant_teleconsult_btn">Start Video Call</button></div></div>
-                <div id="migrant-chatbot" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_chatbot_title">Health Assistant Chatbot</h2><div class="bg-white rounded-xl shadow h-[70vh] flex flex-col"><div id="chat-messages" class="flex-1 p-4 space-y-4 overflow-y-auto flex flex-col"><div class="chat-bubble bot-bubble" data-translate="migrant_chatbot_welcome">Hello! I am your Health Assistant. How can I help you today? You can ask about symptoms, find clinic information, or book an appointment.</div></div><div class="p-4 bg-gray-50 border-t"><div class="flex space-x-2"><input type="text" id="chat-input" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500" data-translate="migrant_chatbot_placeholder" placeholder="Type your message..."><button id="chat-send-btn" class="bg-teal-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-teal-700" data-translate="migrant_chatbot_send">Send</button></div></div></div></div>
-                <div id="migrant-advisories" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_info_title">Health Advisories</h2><div class="space-y-4"><div class="bg-yellow-100 p-5 rounded-xl shadow-md border-l-4 border-yellow-500"><h3 class="font-bold text-lg text-red-800">Dengue Fever Prevention</h3><p class="text-sm text-gray-600 mb-2">From: State Health Dept. | Date: 2025-09-12</p><p class="text-red-800">Prevent mosquito breeding by removing stagnant water. Use mosquito nets and repellents.</p></div></div></div>
+                <div class="main-loader absolute inset-0 bg-gray-100/80 flex justify-center items-center z-10"><div class="loader-spinner"></div></div>
+                <div id="migrant-id" class="sub-dashboard-content active-tab-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_id_title">My Digital Health ID</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl text-center"><h2 class="text-2xl font-bold text-gray-800">Ankit Sharma</h2><p class="text-gray-500 mb-4">ID: 12-3456-7890-1234</p><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ABHA-ID-12-3456-7890-1234" alt="QR Code" class="mx-auto rounded-lg mb-6"><div class="flex flex-col sm:flex-row gap-3 justify-center"><button class="action-btn bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">Download to Wallet</button><button class="action-btn bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded-lg hover:bg-gray-300">Download Offline PDF</button></div><p class="text-sm text-gray-600 mt-4" data-translate="migrant_id_desc">Show this QR code at any registered healthcare facility.</p></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4" data-translate="migrant_summary_title">Health Summary</h2><div class="space-y-4 text-md"><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_blood">Blood Group:</strong><span class="font-semibold float-right">O+</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_allergies">Allergies:</strong><span class="font-semibold float-right">Penicillin</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_chronic">Chronic Conditions:</strong><span class="font-semibold float-right">None Reported</span></div></div></div></div></div>
+                <div id="migrant-locker" class="sub-dashboard-content"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-gray-800" data-translate="migrant_records_title">My Health Records</h2><div class="flex items-center gap-2"><button class="action-btn bg-teal-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-teal-700 text-sm">Upload Report</button></div></div><div class="bg-white p-6 rounded-xl shadow space-y-4"><div><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2"><div class="relative"><select class="appearance-none bg-gray-100 border border-gray-300 rounded-md py-2 px-4 pr-8 focus:outline-none focus:ring-2 focus:ring-teal-500"><option>Filter by Type...</option><option>Prescription</option><option>Lab Report</option><option>Vaccination</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div></div><div class="flex items-center"><span class="mr-2 text-sm font-medium">View:</span><div class="flex rounded-md bg-gray-100 p-1 text-sm"><button class="px-3 py-1 rounded-md bg-white shadow font-semibold">List</button><button class="px-3 py-1">Timeline</button></div></div></div></div><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-blue-100 p-2 rounded-full"><span class="text-xl">🩺</span></div><div><p class="font-semibold" data-translate="migrant_record1_title">General Check-up</p><p class="text-sm text-gray-500">Dr. Priya Nair | CHC, Ernakulam</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record1_desc">Diagnosed with viral fever. Prescription issued.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 12 Sep 2025</p><button class="action-btn text-sm text-teal-600 font-semibold mt-2" data-translate="view_details_btn">View Details</button></div></div><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-green-100 p-2 rounded-full"><span class="text-xl">💉</span></div><div><p class="font-semibold" data-translate="migrant_record2_title">Tetanus Vaccine</p><p class="text-sm text-gray-500">Govt. Hospital, Thrissur</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record2_desc">Booster dose administered.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 25 Jul 2025</p><button class="action-btn text-sm text-teal-600 font-semibold mt-2" data-translate="view_certificate_btn">View Certificate</button></div></div></div></div>
+                <div id="migrant-immunization" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_immunization_title">Immunization</h2><div class="bg-white p-6 rounded-xl shadow mb-6"><h3 class="font-semibold mb-3">My Vaccination Status</h3><div class="space-y-3"><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>COVID-19 (Booster)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_complete">Complete</span></p><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>Tetanus (Td)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_updated">Up to date</span></p><p class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg"><span>Hepatitis B</span> <span class="font-semibold text-yellow-600 text-sm" data-translate="status_partial">Dose 2 of 3 Complete</span></p></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-6 rounded-xl shadow text-center"><h3 class="font-semibold mb-2">Book Appointment</h3><p class="text-sm text-gray-500 mb-4">Schedule your next vaccination dose.</p><button class="action-btn w-full bg-teal-600 text-white font-bold py-2 rounded-lg hover:bg-teal-700">Find a Slot</button></div><div class="bg-white p-6 rounded-xl shadow text-center"><h3 class="font-semibold mb-2">SMS Reminders</h3><p class="text-sm text-gray-500 mb-4">Get notified for upcoming vaccine doses.</p><button class="action-btn w-full bg-gray-200 text-gray-800 font-bold py-2 rounded-lg hover:bg-gray-300">Manage Alerts</button></div></div></div>
+                <div id="migrant-teleconsultation" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_teleconsult_title">Teleconsultation</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-8 rounded-xl shadow text-center"><div class="mb-4"><span class="text-5xl">👨‍⚕️</span></div><h3 class="text-lg font-bold mb-2">Video Consultation</h3><p class="text-sm text-gray-500 mb-6">Connect with a doctor now via video call.</p><p class="text-sm"><strong data-translate="migrant_teleconsult_status">Doctor Status:</strong> <span class="text-green-500 font-bold" data-translate="migrant_teleconsult_online">Online</span></p><button class="action-btn mt-4 w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700" data-translate="migrant_teleconsult_btn">Start Video Call</button></div><div class="bg-white p-8 rounded-xl shadow text-center"><div class="mb-4"><span class="text-5xl">💬</span></div><h3 class="text-lg font-bold mb-2">Chat with a Doctor</h3><p class="text-sm text-gray-500 mb-6">Start a text-based consultation for non-urgent queries.</p><button class="action-btn mt-12 w-full bg-gray-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-700">Start Chat</button></div></div><div class="mt-6 bg-white p-4 rounded-xl shadow"><h3 class="font-semibold mb-2">Follow-up Alerts</h3><div class="text-sm text-gray-600 bg-yellow-100 p-3 rounded-lg">Your follow-up consultation with Dr. Priya for fever is due on 22nd Sep 2025.</div></div></div>
+                <div id="migrant-support" class="sub-dashboard-content"><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="h-[75vh] flex flex-col"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_chatbot_title">Health Assistant Chatbot</h2><div class="bg-white rounded-xl shadow flex-1 flex flex-col"><div id="chat-messages" class="flex-1 p-4 space-y-4 overflow-y-auto flex flex-col"><div class="chat-bubble bot-bubble" data-translate="migrant_chatbot_welcome">Hello! I am your Health Assistant. How can I help you today? You can ask about symptoms, find clinic information, or book an appointment.</div></div><div class="p-4 bg-gray-50 border-t"><div class="flex space-x-2"><input type="text" id="chat-input" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500" data-translate="migrant_chatbot_placeholder" placeholder="Type your message..."><button id="chat-send-btn" class="bg-teal-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-teal-700" data-translate="migrant_chatbot_send">Send</button></div></div></div></div><div><h2 class="text-xl font-bold text-gray-800 mb-4">Health Advisories & FAQs</h2><div class="bg-white p-6 rounded-xl shadow mb-6"><h3 class="font-bold text-lg">Recent Advisories</h3><div class="mt-4 space-y-4"><div class="bg-yellow-100 p-4 rounded-lg border-l-4 border-yellow-500"><h4 class="font-bold text-yellow-800">Dengue Fever Prevention</h4><p class="text-sm text-gray-600 mb-1">From: State Health Dept. | Date: 2025-09-12</p><p class="text-sm text-yellow-800">Prevent mosquito breeding by removing stagnant water. Use mosquito nets and repellents.</p></div></div></div><div class="bg-white p-6 rounded-xl shadow"><h3 class="font-bold text-lg">Frequently Asked Questions (FAQs)</h3><div class="mt-4 space-y-2 text-sm"><div><p class="font-semibold text-gray-700">How do I get a Health ID?</p><p class="text-gray-600 mt-1">You can register at any designated healthcare facility or government service center.</p></div><div class="pt-2 mt-2 border-t"><p class="font-semibold text-gray-700">Is my data secure?</p><p class="text-gray-600 mt-1">Yes, all your health records are encrypted and stored securely following government regulations.</p></div></div></div></div></div></div>
             </main>
         </div>
     </div>
         
+    <!-- Provider Dashboard -->
     <div id="provider-dashboard" data-page class="h-screen w-full bg-gray-100">
         <div id="sidebar-overlay-provider" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
         <aside data-sidebar="provider" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
@@ -234,15 +224,17 @@
         </aside>
         <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
             <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="provider" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2">Provider Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2">Logout</button></div></header>
-            <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="provider">
-                <div id="provider-analytics" class="sub-dashboard-content active-tab-content"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Appointments Today</p><p class="text-4xl font-bold">24</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">New Patients (24h)</p><p class="text-4xl font-bold">6</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Lab Reports Pending</p><p class="text-4xl font-bold">12</p></div><div class="bg-red-100 border border-red-200 p-5 rounded-xl shadow text-center"><p class="text-sm text-red-700">Active Health Alerts</p><p class="text-4xl font-bold text-red-800">2</p></div></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Common Diagnoses (Last 7 Days)</h2><div class="chart-container"><canvas id="commonDiagnosesChart"></canvas></div></div></div>
-                <div id="provider-patients" class="sub-dashboard-content"><div class="bg-white p-4 rounded-xl shadow-lg mb-6 flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"><input type="text" placeholder="Scan QR or enter Patient ID" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"><button class="w-full sm:w-auto bg-blue-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-blue-700">Search</button></div><div class="bg-white rounded-xl shadow-lg overflow-hidden"><h2 class="text-xl font-bold text-gray-800 p-4 border-b">Today's Appointments</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3 font-semibold">Time</th><th class="p-3 font-semibold">Patient Name</th><th class="p-3 font-semibold">Reason</th><th class="p-3 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-3">10:30 AM</td><td class="p-3">Ankit Sharma</td><td class="p-3">Fever &amp; Cold</td><td class="p-3"><a href="#" class="text-blue-600 font-semibold">View Record</a></td></tr></tbody></table></div></div></div>
-                <div id="provider-reporting" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Report Notifiable Disease</h2><div class="bg-white p-6 rounded-xl shadow max-w-md"><form class="space-y-4"><div><label for="disease-2" class="text-sm font-medium text-gray-700">Disease</label><select id="disease-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm"><option>Dengue Fever</option><option>Tuberculosis (TB)</option><option>Typhoid</option><option>Cholera</option></select></div><div><label for="patient-id-2" class="text-sm font-medium text-gray-700">Patient's Unique ID(If consent given thus optional)</label><input type="text" id="patient-id-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm" placeholder="e.g., 12-3456-7890-1234"></div><button type="submit" class="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700">Submit Report</button></form></div></div>
-                <div id="provider-alerts" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Public Health Alerts</h2><div class="space-y-4"><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-red-500"><h3 class="font-bold text-lg text-red-800">High Incidence of Dengue</h3><p class="text-sm text-gray-500 mb-2">From: State Health Dept. | Date: 2025-09-12</p><p class="text-gray-600">Increased dengue cases reported in Ernakulam district. Please advise patients on preventive measures.</p></div></div></div>
+            <main class="relative flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="provider">
+                <div class="main-loader absolute inset-0 bg-gray-100/80 flex justify-center items-center z-10"><div class="loader-spinner"></div></div>
+                <div id="provider-analytics" class="sub-dashboard-content active-tab-content"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Appointments Today</p><p class="text-4xl font-bold">24</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Missed Follow-ups</p><p class="text-4xl font-bold">8</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Vaccination Stats (Today)</p><p class="text-4xl font-bold">15</p></div><div class="bg-red-100 border border-red-200 p-5 rounded-xl shadow text-center"><p class="text-sm text-red-700">Active Health Alerts</p><p class="text-4xl font-bold text-red-800">2</p></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Patient Trends (Last 30 days)</h2><div class="chart-container"><canvas id="patientTrendsChart"></canvas></div></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Common Diagnoses (Last 7 Days)</h2><div class="chart-container"><canvas id="commonDiagnosesChart"></canvas></div></div></div></div>
+                <div id="provider-patients" class="sub-dashboard-content"><div class="bg-white p-4 rounded-xl shadow-lg mb-6 flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"><input type="text" placeholder="Scan QR or enter Patient ID" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"><button id="patient-search-btn" class="w-full sm:w-auto bg-blue-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-blue-700">Search</button></div><div class="bg-white rounded-xl shadow-lg overflow-hidden"><h2 class="text-xl font-bold text-gray-800 p-4 border-b">Today's Appointments</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3 font-semibold">Time</th><th class="p-3 font-semibold">Patient Name</th><th class="p-3 font-semibold">Reason</th><th class="p-3 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-3">10:30 AM</td><td class="p-3">Ankit Sharma</td><td class="p-3">Fever &amp; Cold</td><td class="p-3"><button class="action-btn text-blue-600 font-semibold">View Record</button></td></tr><tr class="border-b bg-gray-50"><td class="p-3">11:00 AM</td><td class="p-3">Rina Das</td><td class="p-3">Follow-up</td><td class="p-3"><button class="action-btn text-blue-600 font-semibold">View Record</button></td></tr><tr class="border-b"><td class="p-3">11:15 AM</td><td class="p-3">Suresh Kumar</td><td class="p-3">Minor Injury</td><td class="p-3"><button class="action-btn text-blue-600 font-semibold">View Record</button></td></tr></tbody></table></div></div></div>
+                <div id="provider-reporting" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Reporting Module</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-6 rounded-xl shadow"><h3 class="font-semibold text-lg mb-3">Report Notifiable Disease</h3><form class="space-y-4 action-form"><div><label for="disease-2" class="text-sm font-medium text-gray-700">Disease</label><select id="disease-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm"><option>Dengue Fever</option><option>Tuberculosis (TB)</option><option>Typhoid</option><option>Cholera</option></select></div><div><label for="patient-id-2" class="text-sm font-medium text-gray-700">Patient's Unique ID (If consent given)</label><input type="text" id="patient-id-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm" placeholder="e.g., 12-3456-7890-1234"></div><div><label for="geo-tag" class="text-sm font-medium text-gray-700">Geo-tag Location (Optional)</label><input type="text" id="geo-tag" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm" placeholder="e.g., 10.0, 76.5"></div><button type="submit" class="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700">Submit Report</button></form></div><div class="bg-white p-6 rounded-xl shadow"><h3 class="font-semibold text-lg mb-3">Upload Lab Results</h3><form class="space-y-4 action-form"><div><label for="patient-id-lab" class="text-sm font-medium text-gray-700">Patient's Unique ID</label><input type="text" id="patient-id-lab" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm" placeholder="e.g., 12-3456-7890-1234" required></div><div><label for="lab-file" class="text-sm font-medium text-gray-700">Report File</label><input type="file" id="lab-file" class="w-full mt-1 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"></div><button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg hover:bg-blue-700">Upload Result</button></form></div></div></div>
+                <div id="provider-alerts" class="sub-dashboard-content"><div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3"><h2 class="text-xl font-bold text-gray-800">Public Health Alerts</h2><div class="flex items-center gap-2"><div class="relative"><select class="appearance-none bg-white border border-gray-300 rounded-md py-2 px-4 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500"><option>Filter by type...</option><option>High Priority</option><option>Advisory</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700"><svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div></div><button class="action-btn bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 text-sm">Export Data</button></div></div><div class="space-y-4"><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-red-500"><h3 class="font-bold text-lg text-red-800">High Incidence of Dengue</h3><p class="text-sm text-gray-500 mb-2">From: State Health Dept. | Date: 2025-09-12</p><p class="text-gray-600">Increased dengue cases reported in Ernakulam district. Please advise patients on preventive measures.</p></div></div></div>
             </main>
         </div>
     </div>
     
+    <!-- Admin Dashboard -->
     <div id="admin-dashboard" data-page class="h-screen w-full bg-gray-100">
         <div id="sidebar-overlay-admin" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
         <aside data-sidebar="admin" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
@@ -256,7 +248,8 @@
         </aside>
         <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
              <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="admin" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2">Public Health Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2">Logout</button></div></header>
-             <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="admin">
+             <main class="relative flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="admin">
+                <div class="main-loader absolute inset-0 bg-gray-100/80 flex justify-center items-center z-10"><div class="loader-spinner"></div></div>
                 <div id="admin-surveillance" class="sub-dashboard-content active-tab-content">
                     <section class="mb-8">
                         <h2 class="text-xl font-bold text-gray-800 mb-4">State-wide Disease Hotspots (Anonymized Data)</h2>
@@ -265,34 +258,46 @@
                         </div>
                     </section>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div class="bg-white p-6 rounded-xl shadow">
-                            <h2 class="text-xl font-bold mb-4">Syndromic Trends (Last 30 Days)</h2>
-                            <div class="chart-container"><canvas id="syndromicTrendsChart"></canvas></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow">
-                            <h2 class="text-xl font-bold mb-4">Notifiable Disease Reports (Last 7 Days)</h2>
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead><tr class="bg-gray-50"><th class="px-4 py-2 text-left text-xs font-medium">Disease</th><th class="px-4 py-2 text-left text-xs font-medium">Location</th><th class="px-4 py-2 text-left text-xs font-medium">Cases</th></tr></thead>
-                                    <tbody>
-                                        <tr><td class="px-4 py-3">Typhoid</td><td class="px-4 py-3">Palakkad</td><td class="px-4 py-3 font-bold">45</td></tr>
-                                        <tr><td class="px-4 py-3">Dengue</td><td class="px-4 py-3">Ernakulam</td><td class="px-4 py-3 font-bold">33</td></tr>
-                                    </tbody>
-                                </table>
+                        <div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Syndromic Trends (Last 30 Days)</h2><div class="chart-container"><canvas id="syndromicTrendsChart"></canvas></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Disease Alerts & Reports</h2><div class="space-y-3"><div class="p-3 bg-red-50 border-l-4 border-red-500 rounded"><p class="font-semibold text-red-800">Typhoid Alert: Palakkad</p><p class="text-sm text-gray-600">Threshold exceeded with 45 new cases this week.</p></div><div class="p-3 bg-orange-50 border-l-4 border-orange-500 rounded"><p class="font-semibold text-orange-800">Dengue Watch: Ernakulam</p><p class="text-sm text-gray-600">Cases rising, currently at 33. Monitoring closely.</p></div></div></div>
+                    </div>
+                </div>
+                <div id="admin-reports" class="sub-dashboard-content">
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3"><h2 class="text-xl font-bold text-gray-800">SDG Monitoring & Health Metrics</h2><button class="action-btn bg-indigo-600 text-white font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 text-sm">Download Reports (PDF/Excel)</button></div>
+                    <h3 class="text-lg font-semibold text-gray-700 mt-6 mb-3">SDG 3.3: Combat Communicable Diseases</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-lg text-center"><h4 class="font-bold text-gray-800 mb-2">TB Screening</h4><p class="text-4xl font-bold text-indigo-600">68%</p><p class="text-sm text-gray-500">of target screened</p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg text-center"><h4 class="font-bold text-gray-800 mb-2">HIV Testing Coverage</h4><p class="text-4xl font-bold text-indigo-600">85%</p><p class="text-sm text-gray-500">of key population</p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg text-center"><h4 class="font-bold text-gray-800 mb-2">Malaria Cases</h4><p class="text-4xl font-bold text-indigo-600">1.2</p><p class="text-sm text-gray-500">per 1000 population</p></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg text-center"><h4 class="font-bold text-gray-800 mb-2">Hepatitis B Vaccination</h4><p class="text-4xl font-bold text-indigo-600">78%</p><p class="text-sm text-gray-500">infant coverage</p></div>
+                    </div>
+
+                    <h3 class="text-lg font-semibold text-gray-700 mt-8 mb-3">Vaccination Coverage</h3>
+                     <div class="grid grid-cols-1 md:grid-cols-1 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-lg">
+                            <h2 class="font-bold text-lg text-gray-800 mb-2">Key Vaccination Rates (Migrant Population)</h2>
+                            <div class="chart-container">
+                                <canvas id="vaccinationCoverageChart"></canvas>
                             </div>
                         </div>
                     </div>
+
+                    <h3 class="text-lg font-semibold text-gray-700 mt-8 mb-3">SDG 3.8: Achieve Universal Health Coverage</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Health Scheme Enrollment</h2><div class="chart-container"><canvas id="enrollmentChart"></canvas></div></div>
+                        <div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Quality & Affordability Metrics</h2><div class="space-y-4 mt-4"><div class="p-3 bg-gray-50 rounded-lg"><strong>Healthcare Access (Geographic):</strong><span class="font-semibold float-right">88%</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong>Affordability Index:</strong><span class="font-semibold float-right">Good</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong>Quality Metric Score:</strong><span class="font-semibold float-right">9.2/10</span></div></div></div>
+                    </div>
                 </div>
-                <div id="admin-reports" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Reporting & SDG Monitoring</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Vaccination Coverage</h2><p class="text-sm text-gray-500 mb-4">Migrant Population - Q3 2025</p><canvas id="vaccinationChart"></canvas></div><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">TB Screening Progress (SDG 3.3)</h2><p class="text-sm text-gray-500 mb-4">Year-to-Date Performance</p><div class="text-center my-8"><div class="inline-block relative"><span class="text-5xl font-bold text-indigo-600">68%</span><p class="text-gray-500">of target screened</p></div></div></div><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Health Coverage (SDG 3.8)</h2><p class="text-sm text-gray-500 mb-4">Enrollment in Health Schemes</p><canvas id="enrollmentChart"></canvas></div></div></div>
-                <div id="admin-usermgmt" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">User & Facility Management</h2><section class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 border-b"><tr><th class="p-4 font-semibold">Name</th><th class="p-4 font-semibold">Type</th><th class="p-4 font-semibold">Location</th><th class="p-4 font-semibold">Registered</th><th class="p-4 font-semibold">Status</th><th class="p-4 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-4">Ankit Sharma</td><td class="p-4">Migrant Worker</td><td class="p-4">Ernakulam</td><td class="p-4">2024-05-12</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><a href="#" class="text-indigo-600 font-semibold">View</a></td></tr><tr class="border-b bg-gray-50"><td class="p-4">Dr. Priya Nair</td><td class="p-4">Healthcare Provider</td><td class="p-4">Ernakulam</td><td class="p-4">2023-11-20</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><a href="#" class="text-indigo-600 font-semibold">View</a></td></tr></tbody></table></div></section></div>
-                <div id="admin-advisory" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Disseminate Health Advisory</h2><div class="bg-white p-6 rounded-xl shadow-lg"><form><div class="mb-4"><label for="title" class="block font-medium text-gray-700 mb-1">Title</label><input type="text" id="title" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., Dengue Fever Prevention"></div><div class="mb-4"><label for="message" class="block font-medium text-gray-700 mb-1">Message</label><textarea id="message" rows="6" class="w-full px-4 py-2 border rounded-lg"></textarea></div><div class="mb-4"><label for="target" class="block font-medium text-gray-700 mb-1">Target Audience</label><select id="target" class="w-full px-4 py-2 border rounded-lg bg-white"><option>All Users</option><option>All Healthcare Providers</option></select></div><button type="submit" class="w-full bg-indigo-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-indigo-700">Send Advisory</button></form></div></div>
+                <div id="admin-usermgmt" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">User & Facility Management</h2><section class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="p-4 bg-gray-50 border-b flex space-x-4"><button class="px-3 py-2 text-sm font-semibold rounded-md bg-white shadow">User CRUD</button><button class="px-3 py-2 text-sm text-gray-600">Facility Management</button><button class="px-3 py-2 text-sm text-gray-600">Provider Management</button></div><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 border-b"><tr><th class="p-4 font-semibold">Name</th><th class="p-4 font-semibold">Type</th><th class="p-4 font-semibold">Location</th><th class="p-4 font-semibold">Registered</th><th class="p-4 font-semibold">Status</th><th class="p-4 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-4">Ankit Sharma</td><td class="p-4">Migrant Worker</td><td class="p-4">Ernakulam</td><td class="p-4">2024-05-12</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><button data-user-details='{"name": "Ankit Sharma", "type": "Migrant Worker", "location": "Ernakulam", "id": "12-3456-7890-1234", "status": "Active"}' class="view-user-btn text-indigo-600 font-semibold">View</button></td></tr><tr class="border-b bg-gray-50"><td class="p-4">Dr. Priya Nair</td><td class="p-4">Healthcare Provider</td><td class="p-4">Ernakulam</td><td class="p-4">2023-11-20</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><button data-user-details='{"name": "Dr. Priya Nair", "type": "Healthcare Provider", "location": "Ernakulam", "id": "HP-5588-34", "status": "Active"}' class="view-user-btn text-indigo-600 font-semibold">View</button></td></tr><tr class="border-b"><td class="p-4">Rina Das</td><td class="p-4">Migrant Worker</td><td class="p-4">Kollam</td><td class="p-4">2024-08-01</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><button data-user-details='{"name": "Rina Das", "type": "Migrant Worker", "location": "Kollam", "id": "12-9876-5432-1098", "status": "Active"}' class="view-user-btn text-indigo-600 font-semibold">View</button></td></tr></tbody></table></div></section></div>
+                <div id="admin-advisory" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Disseminate Health Advisory</h2><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div class="bg-white p-6 rounded-xl shadow-lg"><form class="action-form"><div class="mb-4"><label for="title" class="block font-medium text-gray-700 mb-1">Title</label><input type="text" id="title" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., Dengue Fever Prevention"></div><div class="mb-4"><label for="message" class="block font-medium text-gray-700 mb-1">Message</label><textarea id="message" rows="4" class="w-full px-4 py-2 border rounded-lg"></textarea></div><div class="grid grid-cols-2 gap-4 mb-4"><div><label for="target" class="block font-medium text-gray-700 mb-1">Target</label><select id="target" class="w-full px-4 py-2 border rounded-lg bg-white"><option>All Users</option><option>Healthcare Providers</option></select></div><div><label for="schedule" class="block font-medium text-gray-700 mb-1">Schedule</label><input type="datetime-local" id="schedule" class="w-full px-4 py-2 border rounded-lg"></div></div><button type="submit" class="w-full bg-indigo-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-indigo-700">Send / Schedule</button></form></div><div class="bg-white p-6 rounded-xl shadow-lg"><h3 class="font-bold text-lg mb-3">Delivery Tracking</h3><div class="space-y-3"><div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><div class="truncate"><p class="font-semibold">Dengue Advisory</p><p class="text-xs text-gray-500">Sent: 12 Sep 2025</p></div><div class="text-right"><p class="font-bold text-green-600">98%</p><p class="text-xs text-gray-500">Delivered</p></div></div><div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg"><div class="truncate"><p class="font-semibold">Vaccination Camp Info</p><p class="text-xs text-gray-500">Sent: 05 Sep 2025</p></div><div class="text-right"><p class="font-bold text-green-600">95%</p><p class="text-xs text-gray-500">Delivered</p></div></div></div></div></div></div>
              </main>
         </div>
     </div>
     
+    <!-- Modals -->
     <div id="sos-modal" class="modal-backdrop">
         <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative">
-            <button id="close-modal-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+            <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
             <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -313,6 +318,18 @@
         </div>
     </div>
 
+    <div id="user-details-modal" class="modal-backdrop">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full text-center relative">
+            <button class="close-modal-btn absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">User Details</h2>
+            <div id="user-modal-content" class="text-left space-y-3"></div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] space-y-2"></div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const roleButtons = document.querySelectorAll('.role-btn');
@@ -324,40 +341,14 @@
             const allNavs = document.querySelectorAll('nav[data-nav-for]');
             const langSelectors = document.querySelectorAll('[data-lang-selector]');
             
-            // --- RESPONSIVE SIDEBAR ---
             const hamburgerButtons = document.querySelectorAll('.hamburger-btn');
             const sidebarOverlays = document.querySelectorAll('.sidebar-overlay');
 
-            hamburgerButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    const dashboardType = button.dataset.hamburgerFor;
-                    const sidebar = document.querySelector(`aside[data-sidebar="${dashboardType}"]`);
-                    const overlay = document.getElementById(`sidebar-overlay-${dashboardType}`);
-                    sidebar.classList.remove('-translate-x-full');
-                    overlay.classList.remove('hidden');
-                });
-            });
-
-            const closeAllSidebars = () => {
-                document.querySelectorAll('aside[data-sidebar]').forEach(sidebar => {
-                    sidebar.classList.add('-translate-x-full');
-                });
-                sidebarOverlays.forEach(overlay => {
-                    overlay.classList.add('hidden');
-                });
-            };
-
-            sidebarOverlays.forEach(overlay => overlay.addEventListener('click', closeAllSidebars));
-
             let currentLanguage = 'en';
-
-            const sosButtons = document.querySelectorAll('.sos-button');
-            const sosModal = document.getElementById('sos-modal');
-            const closeModalButton = document.getElementById('close-modal-button');
-            const confirmSosButton = document.getElementById('confirm-sos-button');
-            const sosInitialView = document.getElementById('sos-initial-view');
-            const sosConfirmedView = document.getElementById('sos-confirmed-view');
             
+            const sosModal = document.getElementById('sos-modal');
+            const userDetailsModal = document.getElementById('user-details-modal');
+
             const chatMessages = document.getElementById('chat-messages');
             const chatInput = document.getElementById('chat-input');
             const chatSendBtn = document.getElementById('chat-send-btn');
@@ -380,6 +371,85 @@
             legend.onAdd = function () { const div = L.DomUtil.create('div', 'legend'); div.innerHTML = `<b>Cases</b><br><i style="background:green; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 0–15<br><i style="background:orange; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 16–30<br><i style="background:red; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 31+`; return div; };
             legend.addTo(keralaMap);
 
+            // --- UI Interaction Functions ---
+            function showToast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                container.appendChild(toast);
+                setTimeout(() => { toast.classList.add('show'); }, 100);
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => { toast.remove(); }, 500);
+                }, 3000);
+            }
+            
+            const closeAllSidebars = () => {
+                document.querySelectorAll('aside[data-sidebar]').forEach(sidebar => sidebar.classList.add('-translate-x-full'));
+                sidebarOverlays.forEach(overlay => overlay.classList.add('hidden'));
+            };
+            
+            function openModal(modal) { if(modal) modal.style.display = 'flex'; }
+            function closeModal(modal) { if(modal) modal.style.display = 'none'; }
+            
+            // --- Event Listeners Setup ---
+            hamburgerButtons.forEach(button => button.addEventListener('click', () => {
+                const dashboardType = button.dataset.hamburgerFor;
+                document.querySelector(`aside[data-sidebar="${dashboardType}"]`).classList.remove('-translate-x-full');
+                document.getElementById(`sidebar-overlay-${dashboardType}`).classList.remove('hidden');
+            }));
+            sidebarOverlays.forEach(overlay => overlay.addEventListener('click', closeAllSidebars));
+
+            document.querySelectorAll('.sos-button').forEach(btn => btn.addEventListener('click', () => {
+                document.getElementById('sos-initial-view').style.display = 'block';
+                document.getElementById('sos-confirmed-view').style.display = 'none';
+                openModal(sosModal);
+            }));
+            document.getElementById('confirm-sos-button').addEventListener('click', () => {
+                document.getElementById('sos-initial-view').style.display = 'none';
+                document.getElementById('sos-confirmed-view').style.display = 'block';
+                showToast('Emergency alert sent successfully!', 'success');
+            });
+
+            document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', () => {
+                closeModal(sosModal);
+                closeModal(userDetailsModal);
+            }));
+            window.addEventListener('click', (event) => {
+                if (event.target.classList.contains('modal-backdrop')) {
+                    closeModal(sosModal);
+                    closeModal(userDetailsModal);
+                }
+            });
+
+            document.querySelectorAll('.view-user-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                const details = JSON.parse(e.currentTarget.dataset.userDetails);
+                const contentEl = document.getElementById('user-modal-content');
+                contentEl.innerHTML = `
+                    <p><strong>Name:</strong> ${details.name}</p>
+                    <p><strong>ID:</strong> ${details.id}</p>
+                    <p><strong>Type:</strong> ${details.type}</p>
+                    <p><strong>Location:</strong> ${details.location}</p>
+                    <p><strong>Status:</strong> <span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">${details.status}</span></p>
+                `;
+                openModal(userDetailsModal);
+            }));
+
+            document.getElementById('patient-search-btn').addEventListener('click', () => {
+                showToast('Searching for patient...', 'info');
+            });
+            
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', () => showToast('This feature is for demonstration only.', 'info'))
+            });
+            document.querySelectorAll('.action-form').forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    showToast('Report submitted for review.', 'success');
+                })
+            })
+
             const addMessageToChat = (message, isUser) => { const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isUser ? 'user-bubble' : 'bot-bubble'}`; bubble.textContent = message; chatMessages.appendChild(bubble); chatMessages.scrollTop = chatMessages.scrollHeight; };
             const addTypingIndicator = () => { const typingBubble = document.createElement('div'); typingBubble.id = 'typing-indicator'; typingBubble.className = 'chat-bubble bot-bubble typing-indicator'; typingBubble.innerHTML = '<span></span><span></span><span></span>'; chatMessages.appendChild(typingBubble); chatMessages.scrollTop = chatMessages.scrollHeight; };
             const removeTypingIndicator = () => { const indicator = document.getElementById('typing-indicator'); if (indicator) { indicator.remove(); } };
@@ -388,7 +458,8 @@
                 addMessageToChat(message, true); chatInput.value = ''; addTypingIndicator(); chatInput.disabled = true; chatSendBtn.disabled = true;
                 const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
                 const systemPrompt = "You are a helpful and friendly 'Swasthya-Setu Health Assistant' for migrant workers in Kerala. Your purpose is to provide general health information, explain Swasthya-Setu services (like finding clinics, viewing records), and answer non-diagnostic health questions. You MUST NOT provide medical advice, diagnoses, or interpretations of symptoms. If asked for a diagnosis or medical advice, you must politely decline and strongly recommend using the 'Teleconsultation' feature to speak with a real doctor or using the SOS button in an emergency. Keep your answers concise and easy to understand.";
-                const payload = { contents: [{ parts: [{ text: message }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, };
+                const combinedPrompt = `${systemPrompt}\n\n---\n\nUser Question: "${message}"`;
+                const payload = { contents: [{ parts: [{ text: combinedPrompt }] }] };
                 try {
                     const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!response.ok) { throw new Error(`API error: ${response.statusText}`); }
@@ -399,11 +470,6 @@
             };
             chatSendBtn.addEventListener('click', handleSendMessage);
             chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handleSendMessage(); } });
-
-            sosButtons.forEach(btn => btn.addEventListener('click', () => { sosInitialView.style.display = 'block'; sosConfirmedView.style.display = 'none'; sosModal.style.display = 'flex'; }));
-            closeModalButton.addEventListener('click', () => { sosModal.style.display = 'none'; });
-            confirmSosButton.addEventListener('click', () => { sosInitialView.style.display = 'none'; sosConfirmedView.style.display = 'block'; });
-            window.addEventListener('click', (event) => { if (event.target === sosModal) { sosModal.style.display = 'none'; } });
 
             const translations = {
                  en: { login_title: 'Building a Bridge to Better Health', login_subtitle: 'A unified digital health system for migrant workers in Kerala, ensuring continuous and equitable healthcare access.', login_migrant_title: 'Migrant Worker', login_migrant_desc: 'Access your health records, view prescriptions, and find nearby clinics securely.', login_provider_title: 'Healthcare Provider', login_provider_desc: 'Access patient history, update records, and receive public health alerts.', login_admin_title: 'Admin / Govt Official', login_admin_desc: 'Monitor public health trends, track disease outbreaks, and manage resources.', login_migrant_btn: 'Migrant Worker Login', login_provider_btn: 'Provider Login', login_admin_btn: 'Admin Login', migrant_sidebar_title: 'Worker Portal', migrant_nav_locker: 'Health Locker', migrant_nav_immunization: 'Immunization', migrant_nav_teleconsultation: 'Teleconsultation', migrant_nav_chatbot: 'Health Chatbot', migrant_nav_advisories: 'Health Advisories', migrant_nav_id: 'Digital Health ID', language_label: 'Language', migrant_header_title: 'Worker Dashboard', logout_btn: 'Logout', migrant_id_title: 'My Digital Health ID', migrant_id_desc: 'Show this QR code at any registered healthcare facility.', migrant_summary_title: 'Health Summary', migrant_summary_blood: 'Blood Group:', migrant_summary_allergies: 'Allergies:', migrant_summary_chronic: 'Chronic Conditions:', migrant_records_title: 'My Recent Health Records', migrant_record1_title: 'General Check-up', migrant_record1_desc: 'Diagnosed with viral fever. Prescription issued.', date_label: 'Date:', view_details_btn: 'View Details', migrant_record2_title: 'Tetanus Vaccine', migrant_record2_desc: 'Booster dose administered.', view_certificate_btn: 'View Certificate', migrant_immunization_title: 'Immunization Status', status_complete: 'Complete', status_updated: 'Up to date', status_partial: 'Dose 2 of 3 Complete', migrant_teleconsult_title: 'Teleconsultation', migrant_teleconsult_desc: 'Connect with a doctor now via video call for a consultation.', migrant_teleconsult_status: 'Doctor Status:', migrant_teleconsult_online: 'Online', migrant_teleconsult_btn: 'Start Video Call', migrant_chatbot_title: 'Health Assistant Chatbot', migrant_chatbot_welcome: "Hello! I am your Health Assistant. How can I help you today? You can ask about symptoms, find clinic information, or book an appointment.", migrant_chatbot_placeholder: "Type your message...", migrant_chatbot_send: "Send", migrant_info_title: 'Health Advisories', sos_button: 'SOS' },
@@ -462,16 +528,21 @@
             loginForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 const targetDashboardId = e.currentTarget.dataset.targetDashboard;
-                if (targetDashboardId) {
-                    showPage(targetDashboardId);
+                if (!targetDashboardId) return;
 
-                    // Create charts for the specific dashboard that was just shown
-                    if (targetDashboardId === 'provider-dashboard') {
-                        createProviderCharts();
-                    } else if (targetDashboardId === 'admin-dashboard') {
+                showPage(targetDashboardId);
+                const mainContent = document.querySelector(`#${targetDashboardId} main`);
+                const loader = mainContent.querySelector('.main-loader');
+                if (loader) loader.style.display = 'flex';
+
+                setTimeout(() => {
+                    if (targetDashboardId === 'provider-dashboard') createProviderCharts();
+                    if (targetDashboardId === 'admin-dashboard') {
                         createAdminCharts();
+                        setTimeout(() => keralaMap.invalidateSize(), 0); 
                     }
-                }
+                    if (loader) loader.style.display = 'none';
+                }, 1200);
             });
 
             logoutButtons.forEach(button => button.addEventListener('click', () => showPage('login-page')));
@@ -492,25 +563,21 @@
                 const contentContainer = document.querySelector(`main[data-content-for="${navType}"]`);
                 const targetTabId = button.dataset.tabTarget;
 
-                // Deactivate previously active button and content pane
                 navContainer.querySelector('.side-nav-btn.active')?.classList.remove('active');
                 contentContainer.querySelector('.sub-dashboard-content.active-tab-content')?.classList.remove('active-tab-content');
                 
-                // Activate the new button and its corresponding content pane
                 button.classList.add('active');
                 const targetContent = document.getElementById(targetTabId);
                 if (targetContent) {
                     targetContent.classList.add('active-tab-content');
                 }
 
-                // Refresh the map if its tab is now active
                 if (targetTabId === 'admin-surveillance') { 
-                    setTimeout(() => keralaMap.invalidateSize(), 0); 
+                    setTimeout(() => keralaMap.invalidateSize(), 10); 
                 }
             }
             
             showPage('login-page');
-            createAdminCharts();
         });
 
         let providerCharts = {}, adminCharts = {};
@@ -518,19 +585,45 @@
         
         function createProviderCharts() {
             destroyChart(providerCharts, 'diagnoses');
+            destroyChart(providerCharts, 'trends');
             const diagnosesCtx = document.getElementById('commonDiagnosesChart').getContext('2d');
             providerCharts['diagnoses'] = new Chart(diagnosesCtx, { type: 'bar', data: { labels: ['URTI', 'Gastroenteritis', 'Dermatitis', 'Minor Injury', 'Fever'], datasets: [{ label: 'Cases', data: [45, 32, 25, 18, 15], backgroundColor: 'rgba(59, 130, 246, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } } });
+            const trendsCtx = document.getElementById('patientTrendsChart').getContext('2d');
+            providerCharts['trends'] = new Chart(trendsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'New Patients', data: [15, 22, 18, 25], borderColor: 'rgba(34, 197, 94, 1)', tension: 0.3 }, { label: 'Follow-ups', data: [30, 35, 28, 40], borderColor: 'rgba(234, 179, 8, 1)', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
         }
 
         function createAdminCharts() {
             Object.keys(adminCharts).forEach(key => destroyChart(adminCharts, key));
             const syndromicCtx = document.getElementById('syndromicTrendsChart').getContext('2d');
             adminCharts['syndromic'] = new Chart(syndromicCtx, { type: 'line', data: { labels: ['Aug 1-7', 'Aug 8-14', 'Aug 15-21', 'Aug 22-28', 'Sep 1-7'], datasets: [{ label: 'Fever Cases', data: [120, 150, 190, 160, 210], borderColor: 'rgba(239, 68, 68, 1)', tension: 0.3 }, { label: 'Respiratory', data: [80, 95, 110, 100, 130], borderColor: 'rgba(59, 130, 246, 1)', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } } });
-            const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');
-            adminCharts['vaccination'] = new Chart(vaccinationCtx, { type: 'bar', data: { labels: ['Tetanus', 'Hep B', 'MMR', 'Polio'], datasets: [{ label: 'Coverage %', data: [92, 78, 85, 95], backgroundColor: 'rgba(6, 182, 212, 0.6)' }] }, options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } } });
             const enrollmentCtx = document.getElementById('enrollmentChart').getContext('2d');
-            adminCharts['enrollment'] = new Chart(enrollmentCtx, { type: 'doughnut', data: { labels: ['Ayushman Bharat', 'State Schemes', 'Uninsured'], datasets: [{ data: [75, 7, 18], backgroundColor: ['rgb(6, 182, 212)', 'rgb(22, 163, 74)', 'rgb(239, 68, 68)'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+            adminCharts['enrollment'] = new Chart(enrollmentCtx, { type: 'doughnut', data: { labels: ['Ayushman Bharat', 'State Schemes', 'Uninsured'], datasets: [{ data: [75, 7, 18], backgroundColor: ['rgb(6, 182, 212)', 'rgb(22, 163, 74)', 'rgb(239, 68, 68)'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+            
+            destroyChart(adminCharts, 'vaccinationCoverage');
+            const vaccinationCtx = document.getElementById('vaccinationCoverageChart').getContext('2d');
+            adminCharts['vaccinationCoverage'] = new Chart(vaccinationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['MMR', 'Hepatitis B', 'Tetanus', 'COVID-19 Booster'],
+                    datasets: [{
+                        label: 'Coverage %',
+                        data: [85, 78, 92, 65],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgba(22, 163, 74, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true, ticks: { callback: function(value) { return value + "%" } } } }
+                }
+            });
         }
     </script>
 </body>
 </html>
+
+
