@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swasthya-Setu - Health Records for Migrant Workers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Malayalam:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Malayalam', 'Noto Sans Bengali', sans-serif;
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        [data-page] { display: none; }
+        .active-page { display: flex; }
+        #login-page.active-page, #login-details-page.active-page { display: block; }
+        
+        /* --- FINAL ROBUST TAB FIX --- */
+        .sub-dashboard-content {
+            display: none;
+            /* This forces the element into a new rendering layer, containing the map */
+            transform: translateZ(0); 
+            -webkit-transform: translateZ(0);
+        }
+        .active-tab-content {
+            display: block;
+        }
+        /* --- END FIX --- */
+
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        .side-nav-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #d1d5db; /* gray-300 */
+            transition: all 0.2s;
+            text-align: left;
+        }
+        .side-nav-btn.active {
+            color: #ffffff; /* white */
+            background-color: #1f2937; /* gray-800 */
+            font-weight: 600;
+        }
+        .side-nav-btn:hover:not(.active) {
+            background-color: #374151; /* gray-700 */
+            color: #ffffff;
+        }
+        .side-nav-btn svg {
+            margin-right: 0.75rem;
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 50;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Chat bubble styles */
+        .chat-bubble {
+            max-width: 75%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            margin-bottom: 0.5rem;
+            word-break: break-word;
+        }
+        .user-bubble {
+            background-color: #3b82f6; /* blue-500 */
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
+        }
+        .bot-bubble {
+            background-color: #e5e7eb; /* gray-200 */
+            color: #1f2937; /* gray-800 */
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+        }
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+        }
+        .typing-indicator span {
+            height: 8px;
+            width: 8px;
+            margin: 0 2px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            display: inline-block;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+        
+        .legend {
+            background: white;
+            padding: 8px;
+            line-height: 18px;
+            color: #555;
+            font-size: 14px;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div id="login-page" data-page class="active-page min-h-screen flex flex-col">
+         <header class="w-full bg-white shadow-md flex-shrink-0">
+            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center space-x-3">
+                        <svg class="h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>
+                        <span class="text-2xl font-bold text-slate-800">Swasthya-<span class="text-indigo-600">Setu</span></span>
+                    </div>
+                </div>
+            </nav>
+        </header>
+        <main class="flex-grow flex flex-col justify-center items-center container mx-auto p-4 sm:p-6 lg:p-8">
+            <div class="text-center mb-12"><h1 class="text-4xl md:text-5xl font-extrabold text-slate-900" data-translate="login_title">Building a Bridge to Better Health</h1><p class="mt-4 text-lg text-slate-600 max-w-2xl mx-auto" data-translate="login_subtitle">A unified digital health system for migrant workers in Kerala, ensuring continuous and equitable healthcare access.</p></div>
+            
+            <div class="max-w-4xl w-full mx-auto text-center p-4 rounded-lg mb-8" style="background-color: #fef9c3; border: 2px solid #92400e;">
+                <p class="font-bold" style="color: #92400e;">
+                    PROTOTYPE NOTICE: This is a demonstration. You can click any role below and use any ID/Password on the next screen to log in.
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl w-full">
+                <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow border border-slate-200 flex flex-col items-center text-center"><div class="bg-teal-100 p-4 rounded-full mb-4"><svg class="w-10 h-10 text-teal-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg></div><h2 class="text-2xl font-bold mb-2" data-translate="login_migrant_title">Migrant Worker</h2><p class="text-slate-600 mb-6 flex-grow" data-translate="login_migrant_desc">Access your health records, view prescriptions, and find nearby clinics securely.</p><button data-role="migrant" class="role-btn w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-colors" data-translate="login_migrant_btn">Migrant Worker Login</button></div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow border border-slate-200 flex flex-col items-center text-center"><div class="bg-blue-100 p-4 rounded-full mb-4"><svg class="w-10 h-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75l-2.489-2.489m0 0a3.375 3.375 0 10-4.773-4.773 3.375 3.375 0 004.774 4.774zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" /><path stroke-linecap="round" d="M12 8v4l3 3" /></svg></div><h2 class="text-2xl font-bold mb-2" data-translate="login_provider_title">Healthcare Provider</h2><p class="text-slate-600 mb-6 flex-grow" data-translate="login_provider_desc">Access patient history, update records, and receive public health alerts.</p><button data-role="provider" class="role-btn w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors" data-translate="login_provider_btn">Provider Login</button></div>
+                <div class="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-shadow border border-slate-200 flex flex-col items-center text-center"><div class="bg-indigo-100 p-4 rounded-full mb-4"><svg class="w-10 h-10 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12.75h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" /></svg></div><h2 class="text-2xl font-bold mb-2" data-translate="login_admin_title">Admin / Govt Official</h2><p class="text-slate-600 mb-6 flex-grow" data-translate="login_admin_desc">Monitor public health trends, track disease outbreaks, and manage resources.</p><button data-role="admin" class="role-btn w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors" data-translate="login_admin_btn">Admin Login</button></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="login-details-page" data-page class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+            <h2 id="login-title" class="mt-6 text-center text-3xl font-extrabold text-gray-900"></h2>
+        </div>
+        <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div class="bg-white py-8 px-4 shadow-xl sm:rounded-lg sm:px-10">
+                
+                <div class="p-3 rounded-md bg-yellow-50 border border-yellow-300 text-center mb-6">
+                    <p class="text-sm text-yellow-800">
+                        Since this is a prototype, <b>you can enter any value</b> as an ID and password to sign in.
+                    </p>
+                </div>
+                <form id="login-form" class="space-y-6" action="#" method="POST">
+                    <div>
+                        <label for="id" class="block text-sm font-medium text-gray-700">Health ID / Official ID</label>
+                        <div class="mt-1"><input id="id" name="id" type="text" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="Enter your ID"></div>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <div class="mt-1"><input id="password" name="password" type="password" required class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" placeholder="••••••••"></div>
+                    </div>
+                    <div><button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">Sign in</button></div>
+                </form>
+
+                <div id="qr-login-section" class="mt-6 hidden">
+                    <div class="relative"><div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div><div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">Or</span></div></div>
+                    <div class="mt-6"><button type="button" class="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"><svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75h3.375V19.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M14.25 15.75a2.625 2.625 0 005.25 0v-4.875a2.625 2.625 0 00-5.25 0v4.875z" /></svg>Sign in with QR Code</button></div>
+                </div>
+                <div class="mt-6"><button type="button" class="back-to-home-btn text-center w-full text-sm text-indigo-600 hover:text-indigo-500">Back to role selection</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="migrant-dashboard" data-page class="h-screen w-full bg-gray-100">
+        <div id="sidebar-overlay-migrant" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+        <aside data-sidebar="migrant" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
+            <div class="p-5 border-b border-gray-700"><a href="#" class="text-2xl font-bold text-white">Swasthya<span class="text-teal-400">-Setu</span></a><p class="text-sm text-gray-400" data-translate="migrant_sidebar_title">Worker Portal</p></div>
+            <nav class="flex-1 p-4 space-y-2" data-nav-for="migrant">
+                <button data-tab-target="migrant-id" class="side-nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg><span data-translate="migrant_nav_id">Digital Health ID</span></button>
+                <button data-tab-target="migrant-locker" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg><span data-translate="migrant_nav_locker">Health Locker</span></button>
+                 <button data-tab-target="migrant-immunization" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><span data-translate="migrant_nav_immunization">Immunization</span></button>
+                <button data-tab-target="migrant-teleconsultation" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h7.5" /></svg><span data-translate="migrant_nav_teleconsultation">Teleconsultation</span></button>
+                <button data-tab-target="migrant-chatbot" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.455.09-.934.09-1.423V14.25c0-2.828c0-3.328.024-3.51.048-3.696.068-.534.223-1.047.46-1.517.228-.455.54-1.01.92-1.598.393-.61.88-1.262 1.448-1.928.612-.71 1.368-1.372 2.228-1.928.872-.569 1.86-.96 2.928-1.135.53-.086 1.05-.134 1.55-.164.288-.018.577-.024 1.148-.024 2.39 0 4.34 1.58 4.34 3.5v.085c0 .356.015.707.044 1.05.02.23.038.46.056.688a4.502 4.502 0 01-1.332 3.118l-3.38 3.38a1.5 1.5 0 00-.44 1.06z" /></svg><span data-translate="migrant_nav_chatbot">Health Chatbot</span></button>
+                <button data-tab-target="migrant-advisories" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg><span data-translate="migrant_nav_advisories">Health Advisories</span></button>
+            </nav>
+            <div class="p-4 space-y-4 border-t border-gray-700">
+                <div><label for="language-select-migrant" class="text-xs font-semibold text-gray-400" data-translate="language_label">Language</label><select data-lang-selector class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-600 bg-gray-800 text-white focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"><option value="en">English</option><option value="ml">മലയാളം</option><option value="hi">हिन्दी</option><option value="bn">বাংলা</option></select></div>
+                <div><button class="sos-button w-full bg-red-600 text-white font-bold py-3 rounded-lg hover:bg-red-700 flex items-center justify-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 flex-shrink-0"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691v-4.992a4.125 4.125 0 014.125-4.125H16.5" /></svg>
+                    <span data-translate="sos_button" class="flex-shrink min-w-0 text-center break-all">SOS</span>
+                </button></div>
+            </div>
+        </aside>
+        <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
+            <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="migrant" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2" data-translate="migrant_header_title">Worker Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2" data-translate="logout_btn">Logout</button></div></header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="migrant">
+                <div id="migrant-id" class="sub-dashboard-content active-tab-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_id_title">My Digital Health ID</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-6"><div class="bg-white p-6 md:p-8 rounded-2xl shadow-2xl text-center"><h2 class="text-2xl font-bold text-gray-800">Ankit Sharma</h2><p class="text-gray-500 mb-4">ID: 12-3456-7890-1234</p><img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ABHA-ID-12-3456-7890-1234" alt="QR Code" class="mx-auto rounded-lg mb-6"><p class="text-sm text-gray-600" data-translate="migrant_id_desc">Show this QR code at any registered healthcare facility.</p></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4" data-translate="migrant_summary_title">Health Summary</h2><div class="space-y-4 text-md"><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_blood">Blood Group:</strong><span class="font-semibold float-right">O+</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_allergies">Allergies:</strong><span class="font-semibold float-right">Penicillin</span></div><div class="p-3 bg-gray-50 rounded-lg"><strong data-translate="migrant_summary_chronic">Chronic Conditions:</strong><span class="font-semibold float-right">None Reported</span></div></div></div></div></div>
+                <div id="migrant-locker" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_records_title">My Recent Health Records</h2><div class="bg-white p-6 rounded-xl shadow space-y-4"><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-blue-100 p-2 rounded-full"><span class="text-xl">🩺</span></div><div><p class="font-semibold" data-translate="migrant_record1_title">General Check-up</p><p class="text-sm text-gray-500">Dr. Priya Nair | CHC, Ernakulam</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record1_desc">Diagnosed with viral fever. Prescription issued.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 12 Sep 2025</p><button class="text-sm text-teal-600 font-semibold mt-2" data-translate="view_details_btn">View Details</button></div></div><div class="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg bg-gray-50"><div class="bg-green-100 p-2 rounded-full"><span class="text-xl">💉</span></div><div><p class="font-semibold" data-translate="migrant_record2_title">Tetanus Vaccine</p><p class="text-sm text-gray-500">Govt. Hospital, Thrissur</p><p class="text-sm text-gray-600 mt-1" data-translate="migrant_record2_desc">Booster dose administered.</p><p class="text-xs font-medium text-gray-400 mt-1" data-translate="date_label">Date: 25 Jul 2025</p><button class="text-sm text-teal-600 font-semibold mt-2" data-translate="view_certificate_btn">View Certificate</button></div></div></div></div>
+                <div id="migrant-immunization" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_immunization_title">Immunization Status</h2><div class="bg-white p-6 rounded-xl shadow"><div class="space-y-3"><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>COVID-19 (Booster)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_complete">Complete</span></p><p class="flex justify-between items-center p-3 bg-green-50 rounded-lg"><span>Tetanus (Td)</span> <span class="font-semibold text-green-600 text-sm" data-translate="status_updated">Up to date</span></p><p class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg"><span>Hepatitis B</span> <span class="font-semibold text-yellow-600 text-sm" data-translate="status_partial">Dose 2 of 3 Complete</span></p></div></div></div>
+                <div id="migrant-teleconsultation" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_teleconsult_title">Teleconsultation</h2><div class="bg-white p-8 rounded-xl shadow text-center max-w-md mx-auto"><div class="mb-4"><span class="text-5xl">👨‍⚕️</span></div><h3 class="text-lg font-bold mb-2" data-translate="migrant_teleconsult_desc">Connect with a doctor now via video call for a consultation.</h3><p class="text-sm text-gray-500 mb-6"><strong data-translate="migrant_teleconsult_status">Doctor Status:</strong> <span class="text-green-500 font-bold" data-translate="migrant_teleconsult_online">Online</span></p><button class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700" data-translate="migrant_teleconsult_btn">Start Video Call</button></div></div>
+                <div id="migrant-chatbot" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_chatbot_title">Health Assistant Chatbot</h2><div class="bg-white rounded-xl shadow h-[70vh] flex flex-col"><div id="chat-messages" class="flex-1 p-4 space-y-4 overflow-y-auto flex flex-col"><div class="chat-bubble bot-bubble" data-translate="migrant_chatbot_welcome">Hello! I am your Health Assistant. How can I help you today? You can ask about symptoms, find clinic information, or book an appointment.</div></div><div class="p-4 bg-gray-50 border-t"><div class="flex space-x-2"><input type="text" id="chat-input" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500" data-translate="migrant_chatbot_placeholder" placeholder="Type your message..."><button id="chat-send-btn" class="bg-teal-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-teal-700" data-translate="migrant_chatbot_send">Send</button></div></div></div></div>
+                <div id="migrant-advisories" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4" data-translate="migrant_info_title">Health Advisories</h2><div class="space-y-4"><div class="bg-yellow-100 p-5 rounded-xl shadow-md border-l-4 border-yellow-500"><h3 class="font-bold text-lg text-red-800">Dengue Fever Prevention</h3><p class="text-sm text-gray-600 mb-2">From: State Health Dept. | Date: 2025-09-12</p><p class="text-red-800">Prevent mosquito breeding by removing stagnant water. Use mosquito nets and repellents.</p></div></div></div>
+            </main>
+        </div>
+    </div>
+        
+    <div id="provider-dashboard" data-page class="h-screen w-full bg-gray-100">
+        <div id="sidebar-overlay-provider" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+        <aside data-sidebar="provider" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
+             <div class="p-5 border-b border-gray-700"><a href="#" class="text-2xl font-bold text-white">Swasthya<span class="text-blue-400">-Setu</span></a><p class="text-sm text-gray-400">Provider Portal</p></div>
+             <nav class="flex-1 p-4 space-y-2" data-nav-for="provider">
+                <button data-tab-target="provider-analytics" class="side-nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3v18h18V3H3.75zM8.25 9h7.5M8.25 13.5h7.5M12 17.25h.008v.008H12v-.008z" /></svg>Analytics</button>
+                <button data-tab-target="provider-patients" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m-7.5-2.962A3.375 3.375 0 0110.5 12h3c1.406 0 2.7.54 3.658 1.459M10.5 12a3.375 3.375 0 00-3.658-1.459m0 0A3.375 3.375 0 016.342 12a3.375 3.375 0 01-1.03 2.29m0 0l3.08-3.08m-3.08 3.08a3.375 3.375 0 01-2.29-1.03m2.29 1.03c-.664.28.14.743.54 1.285M12 12A3.375 3.375 0 0115.658 13.46m-3.658-1.46A3.375 3.375 0 0012 12z" /></svg>Patient Queue</button>
+                <button data-tab-target="provider-reporting" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Reporting</button>
+                <button data-tab-target="provider-alerts" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>Public Health Alerts</button>
+            </nav>
+        </aside>
+        <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
+            <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="provider" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2">Provider Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2">Logout</button></div></header>
+            <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="provider">
+                <div id="provider-analytics" class="sub-dashboard-content active-tab-content"><div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Appointments Today</p><p class="text-4xl font-bold">24</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">New Patients (24h)</p><p class="text-4xl font-bold">6</p></div><div class="bg-white p-5 rounded-xl shadow text-center"><p class="text-sm text-gray-500">Lab Reports Pending</p><p class="text-4xl font-bold">12</p></div><div class="bg-red-100 border border-red-200 p-5 rounded-xl shadow text-center"><p class="text-sm text-red-700">Active Health Alerts</p><p class="text-4xl font-bold text-red-800">2</p></div></div><div class="bg-white p-6 rounded-xl shadow"><h2 class="text-xl font-bold mb-4">Common Diagnoses (Last 7 Days)</h2><div class="chart-container"><canvas id="commonDiagnosesChart"></canvas></div></div></div>
+                <div id="provider-patients" class="sub-dashboard-content"><div class="bg-white p-4 rounded-xl shadow-lg mb-6 flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2"><input type="text" placeholder="Scan QR or enter Patient ID" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"><button class="w-full sm:w-auto bg-blue-600 text-white font-semibold px-5 py-2 rounded-lg hover:bg-blue-700">Search</button></div><div class="bg-white rounded-xl shadow-lg overflow-hidden"><h2 class="text-xl font-bold text-gray-800 p-4 border-b">Today's Appointments</h2><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50"><tr><th class="p-3 font-semibold">Time</th><th class="p-3 font-semibold">Patient Name</th><th class="p-3 font-semibold">Reason</th><th class="p-3 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-3">10:30 AM</td><td class="p-3">Ankit Sharma</td><td class="p-3">Fever &amp; Cold</td><td class="p-3"><a href="#" class="text-blue-600 font-semibold">View Record</a></td></tr></tbody></table></div></div></div>
+                <div id="provider-reporting" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Report Notifiable Disease</h2><div class="bg-white p-6 rounded-xl shadow max-w-md"><form class="space-y-4"><div><label for="disease-2" class="text-sm font-medium text-gray-700">Disease</label><select id="disease-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm"><option>Dengue Fever</option><option>Tuberculosis (TB)</option><option>Typhoid</option><option>Cholera</option></select></div><div><label for="patient-id-2" class="text-sm font-medium text-gray-700">Patient's Unique ID(If consent given thus optional)</label><input type="text" id="patient-id-2" class="w-full mt-1 p-2 border-gray-300 rounded-md shadow-sm" placeholder="e.g., 12-3456-7890-1234"></div><button type="submit" class="w-full bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700">Submit Report</button></form></div></div>
+                <div id="provider-alerts" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Public Health Alerts</h2><div class="space-y-4"><div class="bg-white p-5 rounded-xl shadow-md border-l-4 border-red-500"><h3 class="font-bold text-lg text-red-800">High Incidence of Dengue</h3><p class="text-sm text-gray-500 mb-2">From: State Health Dept. | Date: 2025-09-12</p><p class="text-gray-600">Increased dengue cases reported in Ernakulam district. Please advise patients on preventive measures.</p></div></div></div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="admin-dashboard" data-page class="h-screen w-full bg-gray-100">
+        <div id="sidebar-overlay-admin" class="sidebar-overlay fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden"></div>
+        <aside data-sidebar="admin" class="fixed top-0 left-0 z-40 w-64 h-screen bg-gray-900 text-white flex flex-col flex-shrink-0 transition-transform -translate-x-full md:translate-x-0">
+            <div class="p-5 border-b border-gray-700"><a href="#" class="text-2xl font-bold text-white">Swasthya<span class="text-indigo-400">-Setu</span></a><p class="text-sm text-gray-400">Government Portal</p></div>
+            <nav class="flex-1 p-4 space-y-2" data-nav-for="admin">
+                <button data-tab-target="admin-surveillance" class="side-nav-btn active"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 100 15 7.5 7.5 0 000-15zM21 21l-5.197-5.197" /></svg>Surveillance</button>
+                <button data-tab-target="admin-reports" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Reports & SDG</button>
+                <button data-tab-target="admin-usermgmt" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197M15 21a6 6 0 006-5.197M12 12a4 4 0 110-8 4 4 0 010 8z"></path></svg>User Management</button>
+                <button data-tab-target="admin-advisory" class="side-nav-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>Send Advisory</button>
+            </nav>
+        </aside>
+        <div class="flex-1 flex flex-col overflow-hidden md:ml-64">
+             <header class="bg-white shadow-sm p-2 md:p-4 flex justify-between items-center"><div class="flex items-center"><button data-hamburger-for="admin" class="hamburger-btn md:hidden p-2 text-gray-600 hover:text-gray-900"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg></button><h1 class="text-xl md:text-2xl font-bold text-gray-800 ml-2">Public Health Dashboard</h1></div><div class="flex items-center"><button class="back-to-home-btn-dash md:hidden p-2 text-gray-600 hover:text-gray-900" title="Back to Home"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" /></svg></button><button class="logout-btn-dash bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 ml-2">Logout</button></div></header>
+             <main class="flex-1 overflow-x-hidden overflow-y-auto p-3 md:p-6" data-content-for="admin">
+                <div id="admin-surveillance" class="sub-dashboard-content active-tab-content">
+                    <section class="mb-8">
+                        <h2 class="text-xl font-bold text-gray-800 mb-4">State-wide Disease Hotspots (Anonymized Data)</h2>
+                        <div class="bg-white p-4 rounded-xl shadow-lg">
+                            <div id="leaflet-map" style="height:600px; border-radius:0.75rem;"></div>
+                        </div>
+                    </section>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white p-6 rounded-xl shadow">
+                            <h2 class="text-xl font-bold mb-4">Syndromic Trends (Last 30 Days)</h2>
+                            <div class="chart-container"><canvas id="syndromicTrendsChart"></canvas></div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow">
+                            <h2 class="text-xl font-bold mb-4">Notifiable Disease Reports (Last 7 Days)</h2>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead><tr class="bg-gray-50"><th class="px-4 py-2 text-left text-xs font-medium">Disease</th><th class="px-4 py-2 text-left text-xs font-medium">Location</th><th class="px-4 py-2 text-left text-xs font-medium">Cases</th></tr></thead>
+                                    <tbody>
+                                        <tr><td class="px-4 py-3">Typhoid</td><td class="px-4 py-3">Palakkad</td><td class="px-4 py-3 font-bold">45</td></tr>
+                                        <tr><td class="px-4 py-3">Dengue</td><td class="px-4 py-3">Ernakulam</td><td class="px-4 py-3 font-bold">33</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="admin-reports" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Reporting & SDG Monitoring</h2><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Vaccination Coverage</h2><p class="text-sm text-gray-500 mb-4">Migrant Population - Q3 2025</p><canvas id="vaccinationChart"></canvas></div><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">TB Screening Progress (SDG 3.3)</h2><p class="text-sm text-gray-500 mb-4">Year-to-Date Performance</p><div class="text-center my-8"><div class="inline-block relative"><span class="text-5xl font-bold text-indigo-600">68%</span><p class="text-gray-500">of target screened</p></div></div></div><div class="bg-white p-6 rounded-xl shadow-lg"><h2 class="font-bold text-lg text-gray-800 mb-2">Health Coverage (SDG 3.8)</h2><p class="text-sm text-gray-500 mb-4">Enrollment in Health Schemes</p><canvas id="enrollmentChart"></canvas></div></div></div>
+                <div id="admin-usermgmt" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">User & Facility Management</h2><section class="bg-white rounded-xl shadow-lg overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left"><thead class="bg-gray-50 border-b"><tr><th class="p-4 font-semibold">Name</th><th class="p-4 font-semibold">Type</th><th class="p-4 font-semibold">Location</th><th class="p-4 font-semibold">Registered</th><th class="p-4 font-semibold">Status</th><th class="p-4 font-semibold">Actions</th></tr></thead><tbody><tr class="border-b"><td class="p-4">Ankit Sharma</td><td class="p-4">Migrant Worker</td><td class="p-4">Ernakulam</td><td class="p-4">2024-05-12</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><a href="#" class="text-indigo-600 font-semibold">View</a></td></tr><tr class="border-b bg-gray-50"><td class="p-4">Dr. Priya Nair</td><td class="p-4">Healthcare Provider</td><td class="p-4">Ernakulam</td><td class="p-4">2023-11-20</td><td class="p-4"><span class="text-xs font-medium bg-green-100 text-green-800 px-2 py-1 rounded-full">Active</span></td><td class="p-4"><a href="#" class="text-indigo-600 font-semibold">View</a></td></tr></tbody></table></div></section></div>
+                <div id="admin-advisory" class="sub-dashboard-content"><h2 class="text-xl font-bold text-gray-800 mb-4">Disseminate Health Advisory</h2><div class="bg-white p-6 rounded-xl shadow-lg"><form><div class="mb-4"><label for="title" class="block font-medium text-gray-700 mb-1">Title</label><input type="text" id="title" class="w-full px-4 py-2 border rounded-lg" placeholder="e.g., Dengue Fever Prevention"></div><div class="mb-4"><label for="message" class="block font-medium text-gray-700 mb-1">Message</label><textarea id="message" rows="6" class="w-full px-4 py-2 border rounded-lg"></textarea></div><div class="mb-4"><label for="target" class="block font-medium text-gray-700 mb-1">Target Audience</label><select id="target" class="w-full px-4 py-2 border rounded-lg bg-white"><option>All Users</option><option>All Healthcare Providers</option></select></div><button type="submit" class="w-full bg-indigo-600 text-white font-bold px-6 py-3 rounded-lg hover:bg-indigo-700">Send Advisory</button></form></div></div>
+             </main>
+        </div>
+    </div>
+    
+    <div id="sos-modal" class="modal-backdrop">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center relative">
+            <button id="close-modal-button" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Emergency Alert</h2>
+            <div id="sos-initial-view">
+                <p class="text-gray-600 mb-4">You are about to notify emergency services.</p>
+                <p class="text-sm text-gray-500 mb-6">Your approximate location: <br><span class="font-semibold">Near General Hospital, Ernakulam, Kerala</span></p>
+                <div class="space-y-3 mb-6">
+                    <a href="tel:108" class="block w-full bg-blue-100 text-blue-800 font-bold py-3 px-4 rounded-lg hover:bg-blue-200">Call Ambulance (108)</a>
+                    <a href="tel:112" class="block w-full bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg hover:bg-gray-300">Call Police (112)</a>
+                </div>
+                <button id="confirm-sos-button" class="w-full bg-red-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700">Confirm & Send Alert</button>
+            </div>
+             <div id="sos-confirmed-view" class="hidden">
+                <p class="text-green-600 text-lg font-semibold mb-4">Alert Sent!</p>
+                <p class="text-gray-600">Emergency services have been notified of your location. Help is on the way.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const roleButtons = document.querySelectorAll('.role-btn');
+            const loginForm = document.getElementById('login-form');
+            const logoutButtons = document.querySelectorAll('.logout-btn-dash');
+            const backToHomeButtons = document.querySelectorAll('.back-to-home-btn');
+            const backToHomeButtonsDash = document.querySelectorAll('.back-to-home-btn-dash');
+            const pages = document.querySelectorAll('[data-page]');
+            const allNavs = document.querySelectorAll('nav[data-nav-for]');
+            const langSelectors = document.querySelectorAll('[data-lang-selector]');
+            
+            // --- RESPONSIVE SIDEBAR ---
+            const hamburgerButtons = document.querySelectorAll('.hamburger-btn');
+            const sidebarOverlays = document.querySelectorAll('.sidebar-overlay');
+
+            hamburgerButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const dashboardType = button.dataset.hamburgerFor;
+                    const sidebar = document.querySelector(`aside[data-sidebar="${dashboardType}"]`);
+                    const overlay = document.getElementById(`sidebar-overlay-${dashboardType}`);
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                });
+            });
+
+            const closeAllSidebars = () => {
+                document.querySelectorAll('aside[data-sidebar]').forEach(sidebar => {
+                    sidebar.classList.add('-translate-x-full');
+                });
+                sidebarOverlays.forEach(overlay => {
+                    overlay.classList.add('hidden');
+                });
+            };
+
+            sidebarOverlays.forEach(overlay => overlay.addEventListener('click', closeAllSidebars));
+
+            let currentLanguage = 'en';
+
+            const sosButtons = document.querySelectorAll('.sos-button');
+            const sosModal = document.getElementById('sos-modal');
+            const closeModalButton = document.getElementById('close-modal-button');
+            const confirmSosButton = document.getElementById('confirm-sos-button');
+            const sosInitialView = document.getElementById('sos-initial-view');
+            const sosConfirmedView = document.getElementById('sos-confirmed-view');
+            
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const chatSendBtn = document.getElementById('chat-send-btn');
+            
+            const keralaMap = L.map('leaflet-map').setView([10.0, 76.5], 7);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(keralaMap);
+            const diseaseData = { 'Dengue': [{lat: 9.9816, lon: 76.2999, cases: 12, location: 'Ernakulam'},{lat: 12.517, lon: 75.001, cases: 5, location: 'Kasaragod'},], 'Malaria': [{lat: 9.849, lon: 77.116, cases: 18, location: 'Idukki'},{lat: 11.2588, lon: 75.7804, cases: 7, location: 'Kozhikode'},], 'Chikungunya': [{lat: 10.8505, lon: 76.2711, cases: 3, location: 'Thiruvananthapuram'},{lat: 10.7867, lon: 76.6548, cases: 9, location: 'Alappuzha'},], };
+            function getColor(cases) { if (cases > 30) return 'red'; if (cases > 15) return 'orange'; return 'green'; }
+            const diseaseLayers = {};
+            for (const disease in diseaseData) {
+              const layerGroup = L.layerGroup().addTo(keralaMap);
+              diseaseData[disease].forEach(h => {
+                const color = getColor(h.cases);
+                L.circleMarker([h.lat, h.lon], { radius: 12, color: color, fillColor: color, fillOpacity: 0.5 }).addTo(layerGroup).bindPopup(`${disease} – ${h.location}<br><strong>${h.cases} cases</strong>`);
+              });
+              diseaseLayers[disease] = layerGroup;
+            }
+            L.control.layers(null, diseaseLayers).addTo(keralaMap);
+            const legend = L.control({ position: 'bottomright' });
+            legend.onAdd = function () { const div = L.DomUtil.create('div', 'legend'); div.innerHTML = `<b>Cases</b><br><i style="background:green; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 0–15<br><i style="background:orange; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 16–30<br><i style="background:red; width:10px; height:10px; display:inline-block; margin-right:4px;"></i> 31+`; return div; };
+            legend.addTo(keralaMap);
+
+            const addMessageToChat = (message, isUser) => { const bubble = document.createElement('div'); bubble.className = `chat-bubble ${isUser ? 'user-bubble' : 'bot-bubble'}`; bubble.textContent = message; chatMessages.appendChild(bubble); chatMessages.scrollTop = chatMessages.scrollHeight; };
+            const addTypingIndicator = () => { const typingBubble = document.createElement('div'); typingBubble.id = 'typing-indicator'; typingBubble.className = 'chat-bubble bot-bubble typing-indicator'; typingBubble.innerHTML = '<span></span><span></span><span></span>'; chatMessages.appendChild(typingBubble); chatMessages.scrollTop = chatMessages.scrollHeight; };
+            const removeTypingIndicator = () => { const indicator = document.getElementById('typing-indicator'); if (indicator) { indicator.remove(); } };
+            const handleSendMessage = async () => {
+                const message = chatInput.value.trim(); if (!message) return;
+                addMessageToChat(message, true); chatInput.value = ''; addTypingIndicator(); chatInput.disabled = true; chatSendBtn.disabled = true;
+                const apiKey = ""; const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                const systemPrompt = "You are a helpful and friendly 'Swasthya-Setu Health Assistant' for migrant workers in Kerala. Your purpose is to provide general health information, explain Swasthya-Setu services (like finding clinics, viewing records), and answer non-diagnostic health questions. You MUST NOT provide medical advice, diagnoses, or interpretations of symptoms. If asked for a diagnosis or medical advice, you must politely decline and strongly recommend using the 'Teleconsultation' feature to speak with a real doctor or using the SOS button in an emergency. Keep your answers concise and easy to understand.";
+                const payload = { contents: [{ parts: [{ text: message }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, };
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) { throw new Error(`API error: ${response.statusText}`); }
+                    const result = await response.json();
+                    const botResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't process that. Please try again.";
+                    removeTypingIndicator(); addMessageToChat(botResponse, false);
+                } catch (error) { console.error('Gemini API call failed:', error); removeTypingIndicator(); addMessageToChat("I'm having trouble connecting right now. Please try again later.", false); } finally { chatInput.disabled = false; chatSendBtn.disabled = false; chatInput.focus(); }
+            };
+            chatSendBtn.addEventListener('click', handleSendMessage);
+            chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { handleSendMessage(); } });
+
+            sosButtons.forEach(btn => btn.addEventListener('click', () => { sosInitialView.style.display = 'block'; sosConfirmedView.style.display = 'none'; sosModal.style.display = 'flex'; }));
+            closeModalButton.addEventListener('click', () => { sosModal.style.display = 'none'; });
+            confirmSosButton.addEventListener('click', () => { sosInitialView.style.display = 'none'; sosConfirmedView.style.display = 'block'; });
+            window.addEventListener('click', (event) => { if (event.target === sosModal) { sosModal.style.display = 'none'; } });
+
+            const translations = {
+                 en: { login_title: 'Building a Bridge to Better Health', login_subtitle: 'A unified digital health system for migrant workers in Kerala, ensuring continuous and equitable healthcare access.', login_migrant_title: 'Migrant Worker', login_migrant_desc: 'Access your health records, view prescriptions, and find nearby clinics securely.', login_provider_title: 'Healthcare Provider', login_provider_desc: 'Access patient history, update records, and receive public health alerts.', login_admin_title: 'Admin / Govt Official', login_admin_desc: 'Monitor public health trends, track disease outbreaks, and manage resources.', login_migrant_btn: 'Migrant Worker Login', login_provider_btn: 'Provider Login', login_admin_btn: 'Admin Login', migrant_sidebar_title: 'Worker Portal', migrant_nav_locker: 'Health Locker', migrant_nav_immunization: 'Immunization', migrant_nav_teleconsultation: 'Teleconsultation', migrant_nav_chatbot: 'Health Chatbot', migrant_nav_advisories: 'Health Advisories', migrant_nav_id: 'Digital Health ID', language_label: 'Language', migrant_header_title: 'Worker Dashboard', logout_btn: 'Logout', migrant_id_title: 'My Digital Health ID', migrant_id_desc: 'Show this QR code at any registered healthcare facility.', migrant_summary_title: 'Health Summary', migrant_summary_blood: 'Blood Group:', migrant_summary_allergies: 'Allergies:', migrant_summary_chronic: 'Chronic Conditions:', migrant_records_title: 'My Recent Health Records', migrant_record1_title: 'General Check-up', migrant_record1_desc: 'Diagnosed with viral fever. Prescription issued.', date_label: 'Date:', view_details_btn: 'View Details', migrant_record2_title: 'Tetanus Vaccine', migrant_record2_desc: 'Booster dose administered.', view_certificate_btn: 'View Certificate', migrant_immunization_title: 'Immunization Status', status_complete: 'Complete', status_updated: 'Up to date', status_partial: 'Dose 2 of 3 Complete', migrant_teleconsult_title: 'Teleconsultation', migrant_teleconsult_desc: 'Connect with a doctor now via video call for a consultation.', migrant_teleconsult_status: 'Doctor Status:', migrant_teleconsult_online: 'Online', migrant_teleconsult_btn: 'Start Video Call', migrant_chatbot_title: 'Health Assistant Chatbot', migrant_chatbot_welcome: "Hello! I am your Health Assistant. How can I help you today? You can ask about symptoms, find clinic information, or book an appointment.", migrant_chatbot_placeholder: "Type your message...", migrant_chatbot_send: "Send", migrant_info_title: 'Health Advisories', sos_button: 'SOS' },
+                 hi: { login_title: 'बेहतर स्वास्थ्य के लिए एक सेतु का निर्माण', login_subtitle: 'केरल में प्रवासी श्रमिकों के लिए एक एकीकृत डिजिटल स्वास्थ्य प्रणाली, जो निरंतर और समान स्वास्थ्य सेवा सुनिश्चित करती है।', login_migrant_title: 'प्रवासी कामगार', login_migrant_desc: 'अपने स्वास्थ्य रिकॉर्ड तक पहुंचें, नुस्खे देखें और आस-पास के क्लीनिक सुरक्षित रूप से खोजें।', login_provider_title: 'स्वास्थ्य सेवा प्रदाता', login_provider_desc: 'रोगी के इतिहास तक पहुंचें, रिकॉर्ड अपडेट करें और सार्वजनिक स्वास्थ्य अलर्ट प्राप्त करें।', login_admin_title: 'एडमिन / सरकारी अधिकारी', login_admin_desc: 'सार्वजनिक स्वास्थ्य प्रवृत्तियों की निगरानी करें, बीमारी के प्रकोपों ​​को ट्रैक करें और संसाधनों का प्रबंधन करें।', login_migrant_btn: 'प्रवासी कामगार लॉगिन', login_provider_btn: 'प्रदाता लॉगिन', login_admin_btn: 'एडमिन लॉगिन', migrant_sidebar_title: 'वर्कर पोर्टल', migrant_nav_locker: 'स्वास्थ्य लॉकर', migrant_nav_immunization: 'टीकाकरण', migrant_nav_teleconsultation: 'टेलीपरामर्श', migrant_nav_chatbot: 'स्वास्थ्य चैटबॉट', migrant_nav_advisories: 'स्वास्थ्य सलाह', migrant_nav_id: 'डिजिटल स्वास्थ्य आईडी', language_label: 'भाषा', migrant_header_title: 'वर्कर डैशबोर्ड', logout_btn: 'लॉग आउट', migrant_id_title: 'मेरी स्वास्थ्य आईडी', migrant_id_desc: 'इस QR कोड को किसी भी पंजीकृत स्वास्थ्य सुविधा पर दिखाएं।', migrant_summary_title: 'स्वास्थ्य सारांश', migrant_summary_blood: 'रक्त समूह:', migrant_summary_allergies: 'एलर्जी:', migrant_summary_chronic: 'पुरानी स्थितियाँ:', migrant_records_title: 'मेरे हाल के स्वास्थ्य रिकॉर्ड', migrant_record1_title: 'सामान्य जांच', migrant_record1_desc: 'वायरल बुखार का निदान। नुस्खा जारी किया गया।', date_label: 'तारीख:', view_details_btn: 'विवरण देखें', migrant_record2_title: 'टेटनस वैक्सीन', migrant_record2_desc: 'बूस्टर खुराक दी गई।', view_certificate_btn: 'प्रमाणपत्र देखें', migrant_immunization_title: 'टीकाकरण की स्थिति', status_complete: 'पूर्ण', status_updated: 'अद्यतित', status_partial: '3 में से 2 खुराक पूरी', migrant_teleconsult_title: 'टेलीपरामर्श', migrant_teleconsult_desc: 'परामर्श के लिए अभी वीडियो कॉल के माध्यम से डॉक्टर से जुड़ें।', migrant_teleconsult_status: 'डॉक्टर की स्थिति:', migrant_teleconsult_online: 'ऑनलाइन', migrant_teleconsult_btn: 'वीडियो कॉल शुरू करें', migrant_chatbot_title: 'स्वास्थ्य सहायक चैटबॉट', migrant_chatbot_welcome: "नमस्ते! मैं आपका स्वास्थ्य सहायक हूं। आज मैं आपकी कैसे मदद कर सकता हूं? आप लक्षणों के बारे में पूछ सकते हैं, क्लिनिक की जानकारी पा सकते हैं, या अपॉइंटमेंट बुक कर सकते हैं।", migrant_chatbot_placeholder: "अपना संदेश लिखें...", migrant_chatbot_send: "भेजें", migrant_info_title: 'स्वास्थ्य सलाह', sos_button: 'आपातकालीन (SOS)' },
+                 ml: { login_title: 'മെച്ചപ്പെട്ട ആരോഗ്യത്തിനായി ഒരു പാലം പണിയുന്നു', login_subtitle: 'കേരളത്തിലെ കുടിയേറ്റ തൊഴിലാളികൾക്കായി ഒരു ഏകീകൃത ഡിജിറ്റൽ ആരോഗ്യ സംവിധാനം, തുടർച്ചയായതും തുല്യവുമായ ആരോഗ്യ സംരക്ഷണം ഉറപ്പാക്കുന്നു.', login_migrant_title: 'കുടിയേറ്റ തൊഴിലാളി', login_migrant_desc: 'നിങ്ങളുടെ ആരോഗ്യ രേഖകൾ ആക്‌സസ് ചെയ്യുക, കുറിപ്പടികൾ കാണുക, അടുത്തുള്ള ക്ലിനിക്കുകൾ സുരക്ഷിതമായി കണ്ടെത്തുക.', login_provider_title: 'ആരോഗ്യ സംരക്ഷണ ദാതാവ്', login_provider_desc: 'രോഗിയുടെ ചരിത്രം ആക്‌സസ് ചെയ്യുക, രേഖകൾ അപ്‌ഡേറ്റ് ചെയ്യുക, പൊതുജനാരോഗ്യ അലേർട്ടുകൾ സ്വീകരിക്കുക.', login_admin_title: 'അഡ്മിൻ / സർക്കാർ ഉദ്യോഗസ്ഥൻ', login_admin_desc: 'പൊതുജനാരോഗ്യ പ്രവണതകൾ നിരീക്ഷിക്കുക, രോഗം പടരുന്നത് ട്രാക്ക് ചെയ്യുക, വിഭവങ്ങൾ കൈകാര്യം ചെയ്യുക.', login_migrant_btn: 'കുടിയേറ്റ തൊഴിലാളി ലോഗിൻ', login_provider_btn: 'ദാതാവ് ലോഗിൻ', login_admin_btn: 'അഡ്മിൻ ലോഗിൻ', migrant_sidebar_title: 'വർക്കർ പോർട്ടൽ', migrant_nav_locker: 'ഹെൽത്ത് ലോക്കർ', migrant_nav_immunization: 'പ്രതിരോധ കുത്തിവയ്പ്പ്', migrant_nav_teleconsultation: 'ടെലികൺസൾട്ടേഷൻ', migrant_nav_chatbot: 'ഹെൽത്ത് ചാറ്റ്ബോട്ട്', migrant_nav_advisories: 'ആരോഗ്യ ഉപദേശങ്ങൾ', migrant_nav_id: 'ഡിജിറ്റൽ ഹെൽത്ത് ഐഡി', language_label: 'ഭാഷ', migrant_header_title: 'വർക്കർ ഡാഷ്ബോർഡ്', logout_btn: 'ലോഗൗട്ട്', migrant_id_title: 'എൻ്റെ ഡിജിറ്റൽ ഹെൽത്ത് ഐഡി', migrant_id_desc: 'രജിസ്റ്റർ ചെയ്ത ഏതെങ്കിലും ആരോഗ്യ പരിപാലന കേന്ദ്രത്തിൽ ഈ QR കോഡ് കാണിക്കുക.', migrant_summary_title: 'ആരോഗ്യ സംഗ്രഹം', migrant_summary_blood: 'രക്തഗ്രൂപ്പ്:', migrant_summary_allergies: 'അലർജികൾ:', migrant_summary_chronic: 'വിട്ടുമാറാത്ത അവസ്ഥകൾ:', migrant_records_title: 'എൻ്റെ സമീപകാല ആരോഗ്യ രേഖകൾ', migrant_record1_title: 'പൊതുവായ പരിശോധന', migrant_record1_desc: 'വൈറൽ പനി സ്ഥിരീകരിച്ചു. കുറിപ്പടി നൽകി.', date_label: 'തീയതി:', view_details_btn: 'വിശദാംശങ്ങൾ കാണുക', migrant_record2_title: 'ടെറ്റനസ് വാക്സിൻ', migrant_record2_desc: 'ബൂസ്റ്റർ ഡോസ് നൽകി.', view_certificate_btn: 'സർട്ടിഫിക്കറ്റ് കാണുക', migrant_immunization_title: 'പ്രതിരോധ കുത്തിവയ്പ്പ് നില', status_complete: 'പൂർത്തിയായി', status_updated: 'പുതുക്കിയത്', status_partial: '3-ൽ 2 ഡോസ് പൂർത്തിയായി', migrant_teleconsult_title: 'ടെലികൺസൾട്ടേഷൻ', migrant_teleconsult_desc: 'ഒരു കൺസൾട്ടേഷനായി ഇപ്പോൾ വീഡിയോ കോളിലൂടെ ഒരു ഡോക്ടറുമായി ബന്ധപ്പെടുക.', migrant_teleconsult_status: 'ഡോക്ടറുടെ നില:', migrant_teleconsult_online: 'ഓൺലൈൻ', migrant_teleconsult_btn: 'വീഡിയോ കോൾ ആരംഭിക്കുക', migrant_chatbot_title: 'ഹെൽത്ത് അസിസ്റ്റന്റ് ചാറ്റ്ബോട്ട്', migrant_chatbot_welcome: "ഹലോ! ഞാൻ നിങ്ങളുടെ ഹെൽത്ത് അസിസ്റ്റന്റാണ്. ഇന്ന് ഞാൻ നിങ്ങളെ എങ്ങനെ സഹായിക്കും? നിങ്ങൾക്ക് രോഗലക്ഷണങ്ങളെക്കുറിച്ച് ചോദിക്കാം, ക്ലിനിക്ക് വിവരങ്ങൾ കണ്ടെത്താം, അല്ലെങ്കിൽ ഒരു അപ്പോയിന്റ്മെന്റ് ബുക്ക് ചെയ്യാം.", migrant_chatbot_placeholder: "നിങ്ങളുടെ സന്ദേശം ടൈപ്പ് ചെയ്യുക...", migrant_chatbot_send: "അയയ്ക്കുക", migrant_info_title: 'ആരോഗ്യ ഉപദേശങ്ങൾ', sos_button: 'അടിയന്തരം (SOS)' },
+                 bn: { login_title: 'উন্নত স্বাস্থ্যের জন্য একটি সেতু তৈরি করা', login_subtitle: 'কেরালার অভিবাসী কর্মীদের জন্য একটি একীভূত ডিজিটাল স্বাস্থ্য ব্যবস্থা, যা ধারাবাহিক এবং ন্যায়সঙ্গত স্বাস্থ্যসেবা নিশ্চিত করে।', login_migrant_title: 'অভিবাসী কর্মী', login_migrant_desc: 'আপনার স্বাস্থ্য রেকর্ড অ্যাক্সেস করুন, প্রেসক্রিপশন দেখুন এবং নিরাপদে কাছাকাছি ক্লিনিক খুঁজুন।', login_provider_title: 'স্বাস্থ্যসেবা প্রদানকারী', login_provider_desc: 'রোগীর ইতিহাস অ্যাক্সেস করুন, রেকর্ড আপডেট করুন এবং জনস্বাস্থ্য সতর্কতা গ্রহণ করুন।', login_admin_title: 'অ্যাডমিন / সরকারি কর্মকর্তা', login_admin_desc: 'জনস্বাস্থ্য প্রবণতা নিরীক্ষণ করুন, রোগের প্রাদুর্ভাব ট্র্যাক করুন এবং সংস্থান পরিচালনা করুন।', login_migrant_btn: 'অভিবাসী কর্মী লগইন', login_provider_btn: 'প্রদানকারী লগইন', login_admin_btn: 'অ্যাডমিন লগইন', migrant_sidebar_title: 'কর্মী পোর্টাল', migrant_nav_locker: 'হেলথ লকার', migrant_nav_immunization: 'টিকা', migrant_nav_teleconsultation: 'টেলিকনসালটেশন', migrant_nav_chatbot: 'স্বাস্থ্য চ্যাটবট', migrant_nav_advisories: 'স্বাস্থ্য পরামর্শ', migrant_nav_id: 'ডিজিটাল স্বাস্থ্য আইডি', language_label: 'ভাষা', migrant_header_title: 'কর্মী ড্যাশবোর্ড', logout_btn: 'লগ আউট', migrant_id_title: 'আমার ডিজিটাল স্বাস্থ্য আইডি', migrant_id_desc: 'যেকোনো নিবন্ধিত স্বাস্থ্যসেবা সুবিধায় এই QR কোডটি দেখান।', migrant_summary_title: 'স্বাস্থ্য সারসংক্ষেপ', migrant_summary_blood: 'রক্তের গ্রুপ:', migrant_summary_allergies: 'অ্যালার্জি:', migrant_summary_chronic: 'দীর্ঘস্থায়ী অবস্থা:', migrant_records_title: 'আমার সাম্প্রতিক স্বাস্থ্য রেকর্ড', migrant_record1_title: 'সাধারণ চেক-আপ', migrant_record1_desc: 'ভাইরাল জ্বর নির্ণয় করা হয়েছে। প্রেসক্রিপশন জারি করা হয়েছে।', date_label: 'তারিখ:', view_details_btn: 'বিস্তারিত দেখুন', migrant_record2_title: 'টিটেনাস ভ্যাকসিন', migrant_record2_desc: 'বুস্টার ডোজ দেওয়া হয়েছে।', view_certificate_btn: 'শংসাপত্র দেখুন', migrant_immunization_title: 'টিকা দেওয়ার অবস্থা', status_complete: 'সম্পূর্ণ', status_updated: 'আপ টু ডেট', status_partial: '৩টির মধ্যে ২টি ডোজ সম্পূর্ণ', migrant_teleconsult_title: 'টেলিকনসালটেশন', migrant_teleconsult_desc: 'এখনই ভিডিও কলের মাধ্যমে একজন ডাক্তারের সাথে পরামর্শের জন্য সংযোগ করুন।', migrant_teleconsult_status: 'ডাক্তারের অবস্থা:', migrant_teleconsult_online: 'অনলাইন', migrant_teleconsult_btn: 'ভিডিও কল শুরু করুন', migrant_chatbot_title: 'স্বাস্থ্য সহকারী চ্যাটবট', migrant_chatbot_welcome: "হ্যালো! আমি আপনার স্বাস্থ্য সহকারী। আজ আমি আপনাকে কিভাবে সাহায্য করতে পারি? আপনি উপসর্গ সম্পর্কে জিজ্ঞাসা করতে পারেন, ক্লিনিকের তথ্য খুঁজে পেতে পারেন, বা একটি অ্যাপয়েন্টমেন্ট বুক করতে পারেন।", migrant_chatbot_placeholder: "আপনার বার্তা টাইপ করুন...", migrant_chatbot_send: "পাঠান", migrant_info_title: 'স্বাস্থ্য পরামর্শ', sos_button: 'জরুরী (SOS)' }
+            };
+
+            function changeLanguage(lang) {
+                document.documentElement.lang = lang; 
+                document.querySelectorAll('[data-translate]').forEach(el => {
+                    const key = el.dataset.translate;
+                    const translation = translations[lang]?.[key] || translations['en'][key];
+                    if (el.tagName === 'INPUT' && el.placeholder) { el.placeholder = translation; } else { el.innerText = translation; }
+                });
+            }
+
+            langSelectors.forEach(select => {
+                select.addEventListener('change', (e) => {
+                    currentLanguage = e.target.value;
+                    langSelectors.forEach(s => s.value = currentLanguage);
+                    changeLanguage(currentLanguage);
+                });
+            });
+            
+            const showPage = (pageId) => {
+                 closeAllSidebars();
+                 pages.forEach(p => { p.style.display = 'none'; p.classList.remove('active-page'); });
+                 const targetPage = document.getElementById(pageId);
+                 if (targetPage) {
+                     targetPage.style.display = (pageId === 'login-page' || pageId === 'login-details-page') ? 'block' : 'flex';
+                     targetPage.classList.add('active-page');
+                 }
+            };
+            
+            const setupLoginPage = (role) => {
+                const titleEl = document.getElementById('login-title');
+                const qrSection = document.getElementById('qr-login-section');
+                const form = document.getElementById('login-form');
+                
+                const roleTitles = {
+                    migrant: 'Migrant Worker Login',
+                    provider: 'Healthcare Provider Login',
+                    admin: 'Admin / Official Login'
+                };
+
+                titleEl.textContent = roleTitles[role] || 'Login';
+                qrSection.style.display = role === 'migrant' ? 'block' : 'none';
+                form.dataset.targetDashboard = `${role}-dashboard`;
+                
+                showPage('login-details-page');
+            };
+
+            roleButtons.forEach(button => button.addEventListener('click', () => setupLoginPage(button.dataset.role)));
+            
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const targetDashboardId = e.currentTarget.dataset.targetDashboard;
+                if (targetDashboardId) {
+                    showPage(targetDashboardId);
+
+                    // Create charts for the specific dashboard that was just shown
+                    if (targetDashboardId === 'provider-dashboard') {
+                        createProviderCharts();
+                    } else if (targetDashboardId === 'admin-dashboard') {
+                        createAdminCharts();
+                    }
+                }
+            });
+
+            logoutButtons.forEach(button => button.addEventListener('click', () => showPage('login-page')));
+            backToHomeButtons.forEach(button => button.addEventListener('click', () => showPage('login-page')));
+            backToHomeButtonsDash.forEach(button => button.addEventListener('click', () => showPage('login-page')));
+            
+            allNavs.forEach(nav => {
+                nav.querySelectorAll('.side-nav-btn').forEach(button => {
+                    button.addEventListener('click', () => handleTabClick(button));
+                });
+            });
+            
+            function handleTabClick(button) {
+                if (!button) return;
+                closeAllSidebars();
+                const navContainer = button.closest('nav');
+                const navType = navContainer.dataset.navFor;
+                const contentContainer = document.querySelector(`main[data-content-for="${navType}"]`);
+                const targetTabId = button.dataset.tabTarget;
+
+                // Deactivate previously active button and content pane
+                navContainer.querySelector('.side-nav-btn.active')?.classList.remove('active');
+                contentContainer.querySelector('.sub-dashboard-content.active-tab-content')?.classList.remove('active-tab-content');
+                
+                // Activate the new button and its corresponding content pane
+                button.classList.add('active');
+                const targetContent = document.getElementById(targetTabId);
+                if (targetContent) {
+                    targetContent.classList.add('active-tab-content');
+                }
+
+                // Refresh the map if its tab is now active
+                if (targetTabId === 'admin-surveillance') { 
+                    setTimeout(() => keralaMap.invalidateSize(), 0); 
+                }
+            }
+            
+            showPage('login-page');
+            createAdminCharts();
+        });
+
+        let providerCharts = {}, adminCharts = {};
+        function destroyChart(chartObj, key) { if (chartObj[key]) { chartObj[key].destroy(); } }
+        
+        function createProviderCharts() {
+            destroyChart(providerCharts, 'diagnoses');
+            const diagnosesCtx = document.getElementById('commonDiagnosesChart').getContext('2d');
+            providerCharts['diagnoses'] = new Chart(diagnosesCtx, { type: 'bar', data: { labels: ['URTI', 'Gastroenteritis', 'Dermatitis', 'Minor Injury', 'Fever'], datasets: [{ label: 'Cases', data: [45, 32, 25, 18, 15], backgroundColor: 'rgba(59, 130, 246, 0.7)' }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } } });
+        }
+
+        function createAdminCharts() {
+            Object.keys(adminCharts).forEach(key => destroyChart(adminCharts, key));
+            const syndromicCtx = document.getElementById('syndromicTrendsChart').getContext('2d');
+            adminCharts['syndromic'] = new Chart(syndromicCtx, { type: 'line', data: { labels: ['Aug 1-7', 'Aug 8-14', 'Aug 15-21', 'Aug 22-28', 'Sep 1-7'], datasets: [{ label: 'Fever Cases', data: [120, 150, 190, 160, 210], borderColor: 'rgba(239, 68, 68, 1)', tension: 0.3 }, { label: 'Respiratory', data: [80, 95, 110, 100, 130], borderColor: 'rgba(59, 130, 246, 1)', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } } });
+            const vaccinationCtx = document.getElementById('vaccinationChart').getContext('2d');
+            adminCharts['vaccination'] = new Chart(vaccinationCtx, { type: 'bar', data: { labels: ['Tetanus', 'Hep B', 'MMR', 'Polio'], datasets: [{ label: 'Coverage %', data: [92, 78, 85, 95], backgroundColor: 'rgba(6, 182, 212, 0.6)' }] }, options: { responsive: true, indexAxis: 'y', plugins: { legend: { display: false } } } });
+            const enrollmentCtx = document.getElementById('enrollmentChart').getContext('2d');
+            adminCharts['enrollment'] = new Chart(enrollmentCtx, { type: 'doughnut', data: { labels: ['Ayushman Bharat', 'State Schemes', 'Uninsured'], datasets: [{ data: [75, 7, 18], backgroundColor: ['rgb(6, 182, 212)', 'rgb(22, 163, 74)', 'rgb(239, 68, 68)'] }] }, options: { responsive: true, plugins: { legend: { position: 'bottom' } } } });
+        }
+    </script>
+</body>
+</html>
